@@ -51,15 +51,15 @@ def receive_messages(conn):
 
 def client_connected(conn):
     while True:
-        user_name = conn.recv(1024).decode('utf-8')
+        user_name = conn.recv(1024)
         if not user_name:
             break
 
-        if username_exists(user_name, clients):
+        if username_exists(user_name.decode('utf-8'), clients):
             conn.sendall('1'.encode('utf-8'))
         else:
             conn.sendall('0'.encode('utf-8'))
-            clients[conn] = user_name
+            clients[conn] = user_name.decode('utf-8')
             receive_messages(conn)
 
 

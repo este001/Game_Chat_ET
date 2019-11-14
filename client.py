@@ -21,11 +21,11 @@ def name_submit_button():
         name_validation = bool(int(client_socket.recv(1024).decode('utf-8')))
 
         if not name_validation:
-            receive_messages = threading.Thread(target=receive_from_server, args=(client_socket,))
-            receive_messages.start()
-
             app.destroyAllSubWindows()
             app.show()
+            receive_messages = threading.Thread(target=receive_from_server, args=(client_socket,), daemon=True)
+            receive_messages.start()
+
         else:
             app.errorBox('Invalid name', 'Name is not available\nPlease try another one.')
             app.clearEntry('NameEntry')

@@ -4,7 +4,6 @@ import server
 
 
 def test_username_exists():
-
     username1 = 'Testname1'
     username2 = 'Testname2'
 
