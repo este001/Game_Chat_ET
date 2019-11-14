@@ -3,7 +3,7 @@ from appJar import gui
 
 """Client for game/chat application"""
 
-
+# TODO Fix when every condition has been met
 def name_submit_button():
 
     name = app.getEntry('NameEntry')
@@ -20,9 +20,9 @@ def name_submit_button():
     else:
         app.errorBox('Invalid name', 'Name needs to contain at least one character')
 
-
+# TODO Fix this function
 def exit_button():
-    pass
+    client_socket.sendall(''.encode('utf-8'))
 
 
 def buttons(name):
@@ -34,7 +34,7 @@ def buttons(name):
         if k == name:
             v()
 
-
+# TODO Create main window and game subwindow + style
 def create_gui():
 
     # NAME SUBWINDOW
