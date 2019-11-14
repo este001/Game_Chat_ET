@@ -61,6 +61,7 @@ def client_connected(conn):
             conn.sendall('0'.encode('utf-8'))
             clients[conn] = user_name.decode('utf-8')
             receive_messages(conn)
+            break
 
 
 if __name__ == '__main__':

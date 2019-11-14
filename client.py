@@ -33,14 +33,14 @@ def name_submit_button():
         app.errorBox('Invalid name', 'Name needs to contain at least one character')
 
 # TODO Fix this function
-def exit_button():
+def cancel_button():
     client_socket.sendall(''.encode('utf-8'))
 
 
 def buttons(name):
 
     button_dict = {'Submit': name_submit_button,
-                   'Exit': exit_button}
+                   'Cancel': cancel_button}
 
     for k, v in button_dict.items():
         if k == name:
@@ -49,15 +49,33 @@ def buttons(name):
 # TODO Create main window and game subwindow + style
 def create_gui():
 
-    # NAME SUBWINDOW
-    app.startSubWindow('NameSubWindow', modal=True)
-    app.startLabelFrame('Login')
+
+    app.startSubWindow("NameSubWindow", modal=True)
     app.setSize("280x135")
+    app.setResizable(canResize=False)
+    app.startLabelFrame('ChatGame', 1, 0)
 
-    app.addLabel('L1', 'Enter username', 0, 0)
-    app.addEntry('NameEntry', 1, 0)
-    app.addButtons(['Submit', 'Exit'], buttons, 2, 0)
+    app.setPadding([5, 0])
+    app.addLabel('leftfiller', '        ', 0, 0)
+    app.addLabel('rightfiller', '        ', 0, 2)
 
+    app.startFrame('functionality', 0, 1)
+
+    app.addLabel("usernamelabel", "- Enter Username -", 0, 0, colspan=2)
+    app.getLabelWidget("usernamelabel").config(font="verdana 11 bold")
+    app.addEntry('NameEntry', 1, 0, colspan=2)
+    app.setEntryAnchor('NameEntry', 'center')
+
+    # Subwindow Button
+    app.startFrame('buttonframe', 2, 0)
+    app.setPadding([0, 15])
+    app.setSticky('')
+    app.addButton('Submit', buttons, 2, 0)
+    app.addLabel('buttonfiller', '', 2, 1)
+    app.addButton('Cancel', buttons, 2, 2)
+    app.stopFrame()
+
+    app.stopFrame()  # functionality
     app.stopLabelFrame()
     app.stopSubWindow()
 
