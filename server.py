@@ -1,3 +1,6 @@
 """Server for game/chat"""
-"""Test rad"""
 
+
+
+if __name__ == '__main__':
+    pass
