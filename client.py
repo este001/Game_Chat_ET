@@ -5,4 +5,6 @@ import appJar
 
 
 if __name__ == '__main__':
-    pass
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
