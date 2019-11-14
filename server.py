@@ -10,7 +10,6 @@ def username_exists(user_name, clients):
 
 
 def broadcast_message(message, clients, conn):
-
     message = message.decode('utf-8')
     user = clients[conn]
     message = f"{user + ' > ' + message}".encode('utf-8')
@@ -19,13 +18,31 @@ def broadcast_message(message, clients, conn):
         c.sendall(message)
 
 
+def game_challenge():
+    pass
+
+
+def whisper_message(whispered_message, clients, conn):
+    user_to_whisper_list = whispered_message.split()
+    user_to_whisper_list = [user.strip('@') for user in user_to_whisper_list if user[0] == '@']
+    for c in clients:
+        if [True for user in user_to_whisper_list if clients[c] == user]:
+            c.sendall(f'{clients[conn]} > {whispered_message})'.encode('utf-8'))
+
+
 def receive_messages(conn):
     try:
         while True:
             message = conn.recv(1024)
             if not message:
                 break
-            broadcast_message(message, clients, conn)
+            elif message[0] == "S":
+                broadcast_message(message, clients, conn)
+            elif message[0] == "C":
+                # TODO challange logic
+                game_challenge()
+            elif '@' in message.decode('utf-8'):
+                whisper_message(message.decode('utf-8'), clients, conn)
 
     except ConnectionResetError as cre:
         print('recieve message:', cre)
