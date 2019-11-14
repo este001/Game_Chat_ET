@@ -4,18 +4,22 @@ import socket
 import threading
 
 
-def username_exists(user_name):
+def username_exists(user_name, clients):
     if user_name in clients.values():
         return True
+    else:
+        return False
 
 
 def client_connected(conn):
     while True:
-        user_name = conn.recv(1024)
+        user_name = conn.recv(1024).decode('utf-8')
 
         if not user_name:
             break
-        if username_exists(user_name):
+        if username_exists(user_name, clients):
+            conn.sendall('1'.encode('utf-8'))
+        elif not username_exists(user_name, clients):
             conn.sendall('0'.encode('utf-8'))
 
 
