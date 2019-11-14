@@ -5,12 +5,9 @@ import threading
 """Client for game/chat application"""
 
 
-
-
 def receive_from_server(client_socket):
     while True:
         pass
-
 
 
 def name_submit_button():
@@ -32,9 +29,10 @@ def name_submit_button():
     else:
         app.errorBox('Invalid name', 'Name needs to contain at least one character')
 
-# TODO Fix this function
+
 def cancel_button():
-    client_socket.sendall(''.encode('utf-8'))
+    client_socket.close()
+    app.stop()
 
 
 def buttons(name):
@@ -46,7 +44,7 @@ def buttons(name):
         if k == name:
             v()
 
-# TODO Create subwindow for game, CHALLANGE BUTTON
+# TODO Create subwindow for game
 def create_gui():
 
 
@@ -110,16 +108,16 @@ def create_gui():
 
     # BUTTONS
     app.startFrame('button_frame', 7, 7, rowspan=5)
-
-    app.setPadding([2, 30])
-    app.addLabel('bl1', ' ', 3, 0)
-    app.addLabel('bl2', ' ', 3, 4)
-
-    app.addButton('Send', buttons, 3, 1)
-    app.addLabel('filler', ' ', 3, 2)
-    app.addButton('Close', buttons, 3, 3)
-
+    app.setPadding([2, 7])
+    app.addLabel('bl1', ' ', 1, 0)
+    app.addLabel('bl2', ' ', 1, 4)
+    app.addButton('CHALLANGE', buttons, 0, 1, colspan=3)
+    app.addButton('Send', buttons, 1, 1)
+    app.addLabel('filler', ' ', 1, 2)
+    app.addButton('Close', buttons, 1, 3)
     app.stopFrame()  # button_frame
+
+
     app.stopLabelFrame()
     app.stopFrame()  # Outer_frame
 
