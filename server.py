@@ -60,6 +60,7 @@ def client_connected(conn):
         else:
             conn.sendall('0'.encode('utf-8'))
             clients[conn] = user_name.decode('utf-8')
+            broadcast_message(message="Shas connected", conn=conn, clients=clients)
             receive_messages(conn)
             break
 
