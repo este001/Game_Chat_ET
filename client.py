@@ -46,7 +46,7 @@ def buttons(name):
         if k == name:
             v()
 
-# TODO Create main window and game subwindow + style
+# TODO Create subwindow for game, CHALLANGE BUTTON
 def create_gui():
 
 
@@ -79,10 +79,13 @@ def create_gui():
     app.stopLabelFrame()
     app.stopSubWindow()
 
+
+
     # MAIN WINDOW
     app.setSize('650x400')
     app.setResizable(canResize=False)
-    app.startFrame('OuterFRAME', 1, 0)
+
+    app.startFrame('Outer_frame', 1, 0)
     app.startLabelFrame('')
 
     # Makes a column of empty labels to the left
@@ -98,16 +101,15 @@ def create_gui():
     app.setTextAreaWidth('Display', 55)
 
     # PLAYERS ONLINE LIST
-    app.addTextArea('online_display', 0, 7, rowspan=6)
-    app.disableTextArea('online_display')
+    app.addListBox('Online_users_listbox', online_users, 0, 7, rowspan=6)
 
-    # ENTRY AREA
-    app.addTextArea('usersText', 7, 1, 6)
-    app.setTextAreaHeight('usersText', 5)
-    app.setTextAreaWidth('usersText', 60)
+    # MESSAGE ENTRY
+    app.addTextArea('Message_entry', 7, 1, 6)
+    app.setTextAreaHeight('Message_entry', 5)
+    app.setTextAreaWidth('Message_entry', 60)
 
     # BUTTONS
-    app.startFrame('buttonFrame', 7, 7, rowspan=5)
+    app.startFrame('button_frame', 7, 7, rowspan=5)
 
     app.setPadding([2, 30])
     app.addLabel('bl1', ' ', 3, 0)
@@ -117,12 +119,12 @@ def create_gui():
     app.addLabel('filler', ' ', 3, 2)
     app.addButton('Close', buttons, 3, 3)
 
-    app.stopFrame()  # buttonFrame
+    app.stopFrame()  # button_frame
     app.stopLabelFrame()
-    app.stopFrame()  # OuterFRAME
+    app.stopFrame()  # Outer_frame
 
     app.setFont(size=10, family='Verdana', weight='bold')
-    ta1 = app.getTextAreaWidget("usersText")
+    ta1 = app.getTextAreaWidget("Message_entry")
     ta2 = app.getTextAreaWidget("Display")
     ta1.config(font=("Verdana 10 bold"))
     ta2.config(font=("Verdana 10 bold"))
@@ -130,6 +132,7 @@ def create_gui():
 
 if __name__ == '__main__':
 
+    online_users = []
     IP = "127.0.0.1"
     PORT = 1234
 
