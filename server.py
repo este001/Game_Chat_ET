@@ -1,5 +1,3 @@
-"""Server for game/chat"""
-
 import socket
 import threading
 
@@ -11,22 +9,44 @@ def username_exists(user_name, clients):
         return False
 
 
+def broadcast_message(message, clients):
+    for c in clients:
+        c.sendall(message)
+
+
+def receive_messages(conn):
+    try:
+        while True:
+            message = conn.recv(1024)
+            if not message:
+                break
+            broadcast_message(message, clients)
+
+    except ConnectionResetError as cre:
+        print('recieve message:', cre)
+        conn.close()
+        del clients[conn]
+
+
 def client_connected(conn):
     while True:
         user_name = conn.recv(1024).decode('utf-8')
-
         if not user_name:
             break
+
         if username_exists(user_name, clients):
             conn.sendall('1'.encode('utf-8'))
-        elif not username_exists(user_name, clients):
+        else:
             conn.sendall('0'.encode('utf-8'))
+            clients[conn] = user_name
+            receive_messages(conn)
 
 
 if __name__ == '__main__':
     IP = "127.0.0.1"
     PORT = 1234
 
+    # Dictionary for clients connected
     clients = {}
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -36,5 +56,5 @@ if __name__ == '__main__':
     while True:
         conn, addr = server_socket.accept()
 
-        client_thread = threading.Thread(target=client_connected, args=(conn,))
+        client_thread = threading.Thread(target=client_connected, args=(conn,), daemon=True)
         client_thread.start()
