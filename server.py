@@ -12,8 +12,7 @@ def username_exists(user_name, clients):
 def broadcast_message(message, clients, conn):
     message = message.decode('utf-8')
     user = clients[conn]
-    message = f"{user + ' > ' + message}".encode('utf-8')
-
+    message = f"S{user} > {message[1:].encode('utf-8')}"
     for c in clients:
         c.sendall(message)
 
@@ -27,7 +26,7 @@ def whisper_message(whispered_message, clients, conn):
     user_to_whisper_list = [user.strip('@') for user in user_to_whisper_list if user[0] == '@']
     for c in clients:
         if [True for user in user_to_whisper_list if clients[c] == user]:
-            c.sendall(f'{clients[conn]} > {whispered_message})'.encode('utf-8'))
+            c.sendall(f'{clients[conn]} > {whispered_message}'.encode('utf-8'))
 
 
 def receive_messages(conn):
