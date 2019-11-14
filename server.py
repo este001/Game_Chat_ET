@@ -9,7 +9,12 @@ def username_exists(user_name, clients):
         return False
 
 
-def broadcast_message(message, clients):
+def broadcast_message(message, clients, conn):
+
+    message = message.decode('utf-8')
+    user = clients[conn]
+    message = f"{user + ' > ' + message}".encode('utf-8')
+
     for c in clients:
         c.sendall(message)
 
@@ -20,7 +25,7 @@ def receive_messages(conn):
             message = conn.recv(1024)
             if not message:
                 break
-            broadcast_message(message, clients)
+            broadcast_message(message, clients, conn)
 
     except ConnectionResetError as cre:
         print('recieve message:', cre)
