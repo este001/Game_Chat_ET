@@ -5,7 +5,7 @@ import threading
 # TODO kanske bryta ut send till alla, så man bara har ett ställe där servern skickar från// bätrre tester?
 def send_message(message):
     for c in clients:
-        c.sendall(message)
+        c.sendall(message.encode('utf'))
 
 
 def username_exists(user_name, clients):
