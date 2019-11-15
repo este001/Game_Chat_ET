@@ -65,6 +65,7 @@ def receive_from_server():
             elif incoming_message[0:1] == "O":
                 names = incoming_message.lstrip("O")
                 users_online = names.split('-')
+                users_online.pop()
 
                 app.clearListBox('Online_users_listbox')
                 app.addListItems('Online_users_listbox', users_online)
@@ -77,9 +78,10 @@ def receive_from_server():
 def send_message_button():
 
     my_message = app.getTextArea('Message_entry')
-    my_message = f"S{my_message}".encode('utf-8')
-    client_socket.sendall(my_message)
-    app.clearTextArea('Message_entry')
+    if len(my_message) > 0:
+        my_message = f"S{my_message}".encode('utf-8')
+        client_socket.sendall(my_message)
+        app.clearTextArea('Message_entry')
 
 
 def name_submit_button():
@@ -111,6 +113,7 @@ def cancel_button():
 # TODO
 def accept_challenge_button():
     reset_challenger_buttons()
+    app.showSubWindow("GameWindow", hide=False)
 
 
 # TODO
@@ -240,6 +243,30 @@ def create_gui():
     ta1.config(font=("Verdana 10 bold"))
     ta2.config(font=("Verdana 10 bold"))
 
+    # GAME SUBWINDOW
+
+    app.startSubWindow('GameWindow')
+    app.startLabelFrame('Tic Tac Toe')
+    app.addEmptyLabel('emptyLabel1')
+    app.addLabel('Player1', 'Player 1', 1, 0)
+    app.addLabel('vs', 'vs.', 1, 1)
+    app.addLabel('Player2', 'Player 2', 1, 2)
+    app.addEmptyLabel('emptyLabel2')
+
+    app.startFrame('gamebuttonframe', 2, 0, colspan=3, rowspan=3)
+    app.addImageButton("1", buttons, "game_empty.gif", 0, 0)
+    app.addImageButton("2", buttons, "game_empty.gif", 0, 1)
+    app.addImageButton("3", buttons, "game_empty.gif", 0, 2)
+    app.addImageButton("4", buttons, "game_empty.gif", 1, 0)
+    app.addImageButton("5", buttons, "game_empty.gif", 1, 1)
+    app.addImageButton("6", buttons, "game_empty.gif", 1, 2)
+    app.addImageButton("7", buttons, "game_empty.gif", 2, 0)
+    app.addImageButton("8", buttons, "game_empty.gif", 2, 1)
+    app.addImageButton("9", buttons, "game_empty.gif", 2, 2)
+
+    app.stopFrame()
+    app.stopLabelFrame()
+    app.stopSubWindow()
 
 if __name__ == '__main__':
 
