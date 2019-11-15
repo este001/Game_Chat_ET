@@ -3,7 +3,7 @@ import threading
 
 
 # TODO kanske bryta ut send till alla, så man bara har ett ställe där servern skickar från// bätrre tester?
-def send_message(message):
+def send_message(message, clients):
     for c in clients:
         c.sendall(message.encode('utf'))
 
@@ -23,8 +23,12 @@ def broadcast_message(message, clients, conn):
         c.sendall(message)
 
 
-def game_challenge():
-    pass
+def game_challenge(conn, message, clients):
+    challenger = clients[conn]
+    player_to_challenge = message[1:]
+    for c in clients:
+        if clients[c] == player_to_challenge:
+            c.sendall(f'C{challenger}'.encode('utf-8'))
 
 
 def whisper_message(whispered_message, clients, conn):
@@ -45,7 +49,7 @@ def receive_messages(conn):
                 broadcast_message(message, clients, conn)
             elif message[0:1] == "C":
                 # TODO challange logic
-                game_challenge()
+                game_challenge(conn,message,clients)
             elif '@' in message.decode('utf-8'):
                 whisper_message(message.decode('utf-8'), clients, conn)
 
@@ -55,7 +59,7 @@ def receive_messages(conn):
         del clients[conn]
 
 
-def online_users():
+def online_users(clients):
     users_online = "O"
     for c in clients:
         users_online += clients[c] + ' '
@@ -73,7 +77,7 @@ def client_connected(conn):
             conn.sendall('0'.encode('utf-8'))
             clients[conn] = user_name.decode('utf-8')
             broadcast_message(message="Shas connected".encode('utf-8'), conn=conn, clients=clients)
-            send_message(online_users())
+            send_message(online_users(clients), clients)
             receive_messages(conn)
             break
 

@@ -14,4 +14,5 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(actual_result, expected_result)
 
 
-unittest.main()
+if __name__ == '__main__':
+    unittest.main()

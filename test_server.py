@@ -1,19 +1,17 @@
 import server
+import unittest
 
-"""file for running PyTests"""
+
+class ServerTest(unittest.TestCase):
+
+    def test_users_online_message(self):
+        clients = {'client1': 'tim', 'client2': 'este', 'client3': 'oscar'}
+
+        list_of_users = server.online_users(clients)
+        expected_list_of_users = "Otim este oscar "
+
+        self.assertEqual(list_of_users, expected_list_of_users)
 
 
-def test_username_exists():
-    username1 = 'Testname1'
-    username2 = 'Testname2'
-
-    test_dict = {}
-    test_dict['Client_socket'] = username1
-
-    expected_result_true = True
-    expected_result_false = False
-    actual_result1 = server.username_exists(username1, test_dict)
-    actual_result2 = server.username_exists(username2, test_dict)
-
-    assert expected_result_true == actual_result1
-    assert expected_result_false == actual_result2
+if __name__ == '__main__':
+    unittest.main()
