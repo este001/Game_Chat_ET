@@ -27,14 +27,30 @@ def receive_from_server():
                 app.setTextArea('Display', message + '\n\n')
 
             elif incoming_message[0:1] == "C":
+
+                challenge_message = f"---{incoming_message[1:]} has challenged you---\n\n"
+                app.setTextArea('Display', challenge_message)
+
+                app.enableButton('Accept')
+                app.enableButton('Decline')
+                app.setLabel('challenger_name', incoming_message[0:1])
+
+                app.setButtonFg('Accept', 'Red')
+                app.setButtonFg('Decline', 'Red')
+                app.setLableFg('challenger_name', 'Red')
                 # TODO challange logic
-                pass
+            elif incoming_message[0:1] == "O":
+                names = incoming_message.lstrip("O")
+                users_online = names.split()
+
+                app.clearListBox('Online_users_listbox')
+                app.addListItems('Online_users_listbox', users_online)
+
 
     except ConnectionAbortedError as error:
         print('Receive_from_server error: ', error)
 
 
-# TODO
 def send_message_button():
 
     my_message = app.getTextArea('Message_entry')
@@ -67,14 +83,15 @@ def cancel_button():
     client_socket.close()
     app.stop()
 
-# TODO
-def accept_challange_button():
-    pass
 
 # TODO
-def decline_challange_button():
+def accept_challenge_button():
     pass
 
+
+# TODO
+def decline_challenge_button():
+    pass
 
 
 def buttons(name):
@@ -83,12 +100,13 @@ def buttons(name):
                    'Cancel': cancel_button,
                    'Send': send_message_button,
                    'Close': cancel_button,
-                   'Accept': accept_challange_button,
-                   'Decline': decline_challange_button}
+                   'Accept': accept_challenge_button,
+                   'Decline': decline_challenge_button}
 
     for k, v in button_dict.items():
         if k == name:
             v()
+
 
 # TODO Create subwindow for game
 def create_gui():
@@ -158,10 +176,10 @@ def create_gui():
     app.addLabel('bl2', ' ', 1, 4)
 
     #Challange buttons
-    app.addButton('CHALLANGE', buttons, 0, 1, colspan=3)
-    app.addLabel('challangelabel', 'Challanged by:', 1, 1, colspan=2)
-    app.setLabelFg('challangelabel', 'darkgray')                        # Turns black when challanged
-    app.addLabel('challanger_name', '', 2, 1, colspan=2)                # Challengers name goes in here when challanged
+    app.addButton('CHALLENGE', buttons, 0, 1, colspan=3)
+    app.addLabel('challengelabel', 'Challanged by:', 1, 1, colspan=2)
+    app.setLabelFg('challengelabel', 'darkgray')                        # Turns black when challanged
+    app.addLabel('challenger_name', '', 2, 1, colspan=2)                # Challengers name goes in here when challanged
     app.addButton('Accept', buttons, 3, 1)
     app.addButton('Decline', buttons, 3, 3)
     app.disableButton('Accept')
