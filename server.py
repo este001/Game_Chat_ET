@@ -25,6 +25,7 @@ def broadcast_message(message, clients, conn):
 
 
 def game_challenge(conn, message, clients):
+    message = message.decode('utf-8')
     challenger = clients[conn]
     player_to_challenge = message[1:]
     for c in clients:
@@ -37,7 +38,7 @@ def whisper_message(whispered_message, clients, conn):
     user_to_whisper_list = [user.strip('@') for user in user_to_whisper_list if user[0] == '@']
     for c in clients:
         if [True for user in user_to_whisper_list if clients[c] == user]:
-            c.sendall(f'{clients[conn]} > {whispered_message}'.encode('utf-8'))
+            c.sendall(f'{clients[conn]} > {whispered_message}'.encode('utf-8')  )
 
 
 def receive_messages(conn):
@@ -48,7 +49,7 @@ def receive_messages(conn):
                 break
             elif message[0:1].decode('utf-8') == "S":
                 broadcast_message(message, clients, conn)
-            elif message[0:1] == "C":
+            elif message[0:1].decode('utf-8') == "C":
                 # TODO challange logic
                 game_challenge(conn,message,clients)
             elif '@' in message.decode('utf-8'):

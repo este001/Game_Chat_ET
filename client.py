@@ -1,8 +1,19 @@
 import socket
 from appJar import gui
 import threading
+import time
 
 """Client for game/chat application"""
+
+def reset_challenger_buttons():
+
+
+    app.setLabel('challenger_name', '')
+    app.setButtonFg('Accept', 'Black')
+    app.setButtonFg('Decline', 'Black')
+    app.setLabelFg('challengelabel', 'darkgray')
+    app.disableButton('Accept')
+    app.disableButton('Decline')
 
 
 def strip_header(message):
@@ -10,6 +21,14 @@ def strip_header(message):
 
     message = message[1:]
     return message
+
+
+def challenger_colour_change():
+    while True:
+        app.setLabelFg('challenger_name', 'Red')
+        time.sleep(1.50)
+        app.setLabelFg('challenger_name', 'linen')
+        time.sleep(0.5)
 
 
 def receive_from_server():
@@ -33,15 +52,19 @@ def receive_from_server():
 
                 app.enableButton('Accept')
                 app.enableButton('Decline')
-                app.setLabel('challenger_name', incoming_message[0:1])
+                app.setLabel('challenger_name', incoming_message[1:])
 
                 app.setButtonFg('Accept', 'Red')
                 app.setButtonFg('Decline', 'Red')
-                app.setLableFg('challenger_name', 'Red')
+                app.setLabelFg('challengelabel', 'Red')
+
+                colour_thread = threading.Thread(target=challenger_colour_change, daemon=True)
+                colour_thread.start()
+
                 # TODO challange logic
             elif incoming_message[0:1] == "O":
                 names = incoming_message.lstrip("O")
-                users_online = names.split()
+                users_online = names.split('-')
 
                 app.clearListBox('Online_users_listbox')
                 app.addListItems('Online_users_listbox', users_online)
@@ -61,6 +84,7 @@ def send_message_button():
 
 def name_submit_button():
 
+    global user_name
     name = app.getEntry('NameEntry')
     if len(name) != 0:
         client_socket.sendall(name.encode('utf-8'))
@@ -86,12 +110,22 @@ def cancel_button():
 
 # TODO
 def accept_challenge_button():
-    pass
+    reset_challenger_buttons()
 
 
 # TODO
 def decline_challenge_button():
-    pass
+    reset_challenger_buttons()
+    message = "has declined a challenge"
+    client_socket.sendall(f"S{message}".encode('utf-8'))
+
+
+def challenge_player():
+    challenged_player = app.getListBox('Online_users_listbox')[0]
+
+    if challenged_player != user_name:
+        challenge = f"C{challenged_player}".encode('utf-8')
+        client_socket.sendall(challenge)
 
 
 def buttons(name):
@@ -101,7 +135,8 @@ def buttons(name):
                    'Send': send_message_button,
                    'Close': cancel_button,
                    'Accept': accept_challenge_button,
-                   'Decline': decline_challenge_button}
+                   'Decline': decline_challenge_button,
+                   'CHALLENGE': challenge_player}
 
     for k, v in button_dict.items():
         if k == name:
@@ -177,13 +212,17 @@ def create_gui():
 
     #Challange buttons
     app.addButton('CHALLENGE', buttons, 0, 1, colspan=3)
-    app.addLabel('challengelabel', 'Challanged by:', 1, 1, colspan=2)
-    app.setLabelFg('challengelabel', 'darkgray')                        # Turns black when challanged
-    app.addLabel('challenger_name', '', 2, 1, colspan=2)                # Challengers name goes in here when challanged
+    app.addLabel('challengelabel', 'Challenged by:', 1, 1, colspan=3)
+    app.setLabelFg('challengelabel', 'darkgray')                        # Turns red when challanged
+    app.getLabelWidget('challengelabel').config(font="verdana 11 bold")
+    app.addLabel('challenger_name', '', 2, 1, colspan=3)                # Challengers name goes in here when challanged
+    app.getLabelWidget('challenger_name').config(font="verdana 14 bold")
+
     app.addButton('Accept', buttons, 3, 1)
     app.addButton('Decline', buttons, 3, 3)
     app.disableButton('Accept')
     app.disableButton('Decline')
+
 
     #Chat buttons
     app.addButton('Send', buttons, 4, 1)
@@ -205,6 +244,7 @@ def create_gui():
 if __name__ == '__main__':
 
     online_users = []
+    user_name = ''
     IP = "127.0.0.1"
     PORT = 1234
 
