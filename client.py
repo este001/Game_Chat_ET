@@ -6,8 +6,33 @@ import threading
 
 
 def receive_from_server(client_socket):
-    while True:
-        pass
+    try:
+        while True:
+            incoming_message = client_socket.recv(1024)
+
+            if not incoming_message:
+                break
+
+            incoming_message = incoming_message.decode('utf-8')
+            print(incoming_message)
+            if incoming_message[0] == "S":
+                app.setTextArea('Display', incoming_message)
+            elif incoming_message[0] == "C":
+                # TODO challange logic
+                pass
+
+    except ConnectionAbortedError as error:
+        print('Receive_from_server error: ', error)
+
+# TODO
+def send_message_button():
+
+    send_message = app.getTextArea('Message_entry')
+
+    send_message = f"S{send_message}".encode('utf-8')
+    client_socket.sendall(send_message)
+
+    app.clearTextArea('Message_entry')
 
 
 def name_submit_button():
@@ -34,11 +59,24 @@ def cancel_button():
     client_socket.close()
     app.stop()
 
+# TODO
+def accept_challange_button():
+    pass
+
+# TODO
+def decline_challange_button():
+    pass
+
+
 
 def buttons(name):
 
     button_dict = {'Submit': name_submit_button,
-                   'Cancel': cancel_button}
+                   'Cancel': cancel_button,
+                   'Send': send_message_button,
+                   'Close': cancel_button,
+                   'Accept': accept_challange_button,
+                   'Decline': decline_challange_button}
 
     for k, v in button_dict.items():
         if k == name:
@@ -47,7 +85,7 @@ def buttons(name):
 # TODO Create subwindow for game
 def create_gui():
 
-
+    # SUBWINDOW LOGIN
     app.startSubWindow("NameSubWindow", modal=True)
     app.setSize("280x135")
     app.setResizable(canResize=False)
@@ -78,9 +116,8 @@ def create_gui():
     app.stopSubWindow()
 
 
-
     # MAIN WINDOW
-    app.setSize('650x400')
+    app.setSize('750x400')
     app.setResizable(canResize=False)
 
     app.startFrame('Outer_frame', 1, 0)
@@ -96,31 +133,42 @@ def create_gui():
     app.addScrolledTextArea('Display', 0, 1, 6, 6)
     app.disableTextArea('Display')
     app.setTextAreaHeight('Display', 20)
-    app.setTextAreaWidth('Display', 55)
+    app.setTextAreaWidth('Display', 60)
 
     # PLAYERS ONLINE LIST
-    app.addListBox('Online_users_listbox', online_users, 0, 7, rowspan=6)
+    app.addListBox('Online_users_listbox', online_users, 0, 7, rowspan=4)
 
     # MESSAGE ENTRY
     app.addTextArea('Message_entry', 7, 1, 6)
-    app.setTextAreaHeight('Message_entry', 5)
+    app.setTextAreaHeight('Message_entry', 6)
     app.setTextAreaWidth('Message_entry', 60)
 
     # BUTTONS
-    app.startFrame('button_frame', 7, 7, rowspan=5)
-    app.setPadding([2, 7])
+    app.startFrame('button_frame', 4, 7, rowspan=5)
+    app.setPadding([1, 8])
     app.addLabel('bl1', ' ', 1, 0)
     app.addLabel('bl2', ' ', 1, 4)
-    app.addButton('CHALLANGE', buttons, 0, 1, colspan=3)
-    app.addButton('Send', buttons, 1, 1)
-    app.addLabel('filler', ' ', 1, 2)
-    app.addButton('Close', buttons, 1, 3)
-    app.stopFrame()  # button_frame
 
+    #Challange buttons
+    app.addButton('CHALLANGE', buttons, 0, 1, colspan=3)
+    app.addLabel('challangelabel', 'Challanged by:', 1, 1, colspan=2)
+    app.setLabelFg('challangelabel', 'darkgray')                        # Turns black when challanged
+    app.addLabel('challanger_name', '', 2, 1, colspan=2)                # Challengers name goes in here when challanged
+    app.addButton('Accept', buttons, 3, 1)
+    app.addButton('Decline', buttons, 3, 3)
+    app.disableButton('Accept')
+    app.disableButton('Decline')
+
+    #Chat buttons
+    app.addButton('Send', buttons, 4, 1)
+    app.addLabel('filler', '', 4, 2)
+    app.addButton('Close', buttons, 4, 3)
+    app.stopFrame()  # button_frame
 
     app.stopLabelFrame()
     app.stopFrame()  # Outer_frame
 
+    # GENERAL DESIGN
     app.setFont(size=10, family='Verdana', weight='bold')
     ta1 = app.getTextAreaWidget("Message_entry")
     ta2 = app.getTextAreaWidget("Display")

@@ -43,6 +43,7 @@ def receive_messages(conn):
             elif '@' in message.decode('utf-8'):
                 whisper_message(message.decode('utf-8'), clients, conn)
 
+
     except ConnectionResetError as cre:
         print('recieve message:', cre)
         conn.close()
