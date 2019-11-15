@@ -4,6 +4,7 @@ import threading
 
 """Client for game/chat application"""
 
+
 def strip_header(message):
     """Returns the message striped of it's header"""
 
@@ -11,7 +12,7 @@ def strip_header(message):
     return message
 
 
-def receive_from_server(client_socket):
+def receive_from_server():
     try:
         while True:
             incoming_message = client_socket.recv(1024)
@@ -21,11 +22,11 @@ def receive_from_server(client_socket):
 
             incoming_message = incoming_message.decode('utf-8')
 
-            if incoming_message[0] == "S":
+            if incoming_message[0:1] == "S":
                 message = strip_header(incoming_message)
-                app.setTextArea('Display', message)
+                app.setTextArea('Display', message + '\n\n')
 
-            elif incoming_message[0] == "C":
+            elif incoming_message[0:1] == "C":
                 # TODO challange logic
                 pass
 
@@ -52,7 +53,7 @@ def name_submit_button():
         if not name_validation:
             app.destroyAllSubWindows()
             app.show()
-            receive_messages = threading.Thread(target=receive_from_server, args=(client_socket,), daemon=True)
+            receive_messages = threading.Thread(target=receive_from_server, daemon=True)
             receive_messages.start()
 
         else:

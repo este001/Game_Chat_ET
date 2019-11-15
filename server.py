@@ -13,6 +13,7 @@ def broadcast_message(message, clients, conn):
     message = message.decode('utf-8')
     user = clients[conn]
     message = f"S{user} > {message[1:]}".encode('utf-8')
+
     for c in clients:
         c.sendall(message)
 
@@ -35,9 +36,9 @@ def receive_messages(conn):
             message = conn.recv(1024)
             if not message:
                 break
-            elif message[0] == "S":
+            elif message[0:1].decode('utf-8') == "S":
                 broadcast_message(message, clients, conn)
-            elif message[0] == "C":
+            elif message[0:1] == "C":
                 # TODO challange logic
                 game_challenge()
             elif '@' in message.decode('utf-8'):
@@ -60,6 +61,7 @@ def client_connected(conn):
             conn.sendall('1'.encode('utf-8'))
         else:
             conn.sendall('0'.encode('utf-8'))
+
             clients[conn] = user_name.decode('utf-8')
             broadcast_message(message="Shas connected".encode('utf-8'), conn=conn, clients=clients)
             receive_messages(conn)
