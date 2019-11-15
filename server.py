@@ -2,6 +2,12 @@ import socket
 import threading
 
 
+# TODO kanske bryta ut send till alla, så man bara har ett ställe där servern skickar från// bätrre tester?
+def send_message(message):
+    for c in clients:
+        c.sendall(message)
+
+
 def username_exists(user_name, clients):
     if user_name in clients.values():
         return True
@@ -13,7 +19,6 @@ def broadcast_message(message, clients, conn):
     message = message.decode('utf-8')
     user = clients[conn]
     message = f"S{user} > {message[1:]}".encode('utf-8')
-
     for c in clients:
         c.sendall(message)
 
@@ -44,11 +49,17 @@ def receive_messages(conn):
             elif '@' in message.decode('utf-8'):
                 whisper_message(message.decode('utf-8'), clients, conn)
 
-
     except ConnectionResetError as cre:
         print('recieve message:', cre)
         conn.close()
         del clients[conn]
+
+
+def online_users():
+    users_online = "O"
+    for c in clients:
+        users_online += clients[c] + ' '
+    return users_online
 
 
 def client_connected(conn):
@@ -56,14 +67,13 @@ def client_connected(conn):
         user_name = conn.recv(1024)
         if not user_name:
             break
-
         if username_exists(user_name.decode('utf-8'), clients):
             conn.sendall('1'.encode('utf-8'))
         else:
             conn.sendall('0'.encode('utf-8'))
-
             clients[conn] = user_name.decode('utf-8')
             broadcast_message(message="Shas connected".encode('utf-8'), conn=conn, clients=clients)
+            send_message(online_users())
             receive_messages(conn)
             break
 
