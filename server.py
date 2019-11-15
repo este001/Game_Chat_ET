@@ -63,7 +63,7 @@ def receive_messages(conn):
 def online_users(clients):
     users_online = "O"
     for c in clients:
-        users_online += clients[c] + ' '
+        users_online += clients[c] + '-'
     return users_online
 
 
