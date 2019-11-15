@@ -1,9 +1,10 @@
 import socket
 import threading
+import time
 
 
 # TODO kanske bryta ut send till alla, så man bara har ett ställe där servern skickar från// bätrre tester?
-def send_message(message):
+def send_message(message, clients):
     for c in clients:
         c.sendall(message.encode('utf'))
 
@@ -55,7 +56,7 @@ def receive_messages(conn):
         del clients[conn]
 
 
-def online_users():
+def online_users(clients):
     users_online = "O"
     for c in clients:
         users_online += clients[c] + ' '
@@ -63,6 +64,7 @@ def online_users():
 
 
 def client_connected(conn):
+
     while True:
         user_name = conn.recv(1024)
         if not user_name:
@@ -72,8 +74,11 @@ def client_connected(conn):
         else:
             conn.sendall('0'.encode('utf-8'))
             clients[conn] = user_name.decode('utf-8')
+
             broadcast_message(message="Shas connected".encode('utf-8'), conn=conn, clients=clients)
-            send_message(online_users())
+            time.sleep(0.5)
+            send_message(online_users(clients), clients)
+
             receive_messages(conn)
             break
 
