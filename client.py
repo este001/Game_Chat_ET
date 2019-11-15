@@ -4,6 +4,12 @@ import threading
 
 """Client for game/chat application"""
 
+def strip_header(message):
+    """Returns the message striped of it's header"""
+
+    message = message[1:]
+    return message
+
 
 def receive_from_server(client_socket):
     try:
@@ -14,9 +20,11 @@ def receive_from_server(client_socket):
                 break
 
             incoming_message = incoming_message.decode('utf-8')
-            print(incoming_message)
+
             if incoming_message[0] == "S":
-                app.setTextArea('Display', incoming_message)
+                message = strip_header(incoming_message)
+                app.setTextArea('Display', message)
+
             elif incoming_message[0] == "C":
                 # TODO challange logic
                 pass
@@ -24,14 +32,13 @@ def receive_from_server(client_socket):
     except ConnectionAbortedError as error:
         print('Receive_from_server error: ', error)
 
+
 # TODO
 def send_message_button():
 
-    send_message = app.getTextArea('Message_entry')
-
-    send_message = f"S{send_message}".encode('utf-8')
-    client_socket.sendall(send_message)
-
+    my_message = app.getTextArea('Message_entry')
+    my_message = f"S{my_message}".encode('utf-8')
+    client_socket.sendall(my_message)
     app.clearTextArea('Message_entry')
 
 
