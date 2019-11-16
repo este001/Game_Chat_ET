@@ -93,7 +93,7 @@ def name_submit_button():
         name_validation = bool(int(client_socket.recv(1024).decode('utf-8')))
 
         if not name_validation:
-            app.destroyAllSubWindows()
+            app.destroySubWindow('NameSubWindow')
             app.show()
             receive_messages = threading.Thread(target=receive_from_server, daemon=True)
             receive_messages.start()
@@ -226,7 +226,6 @@ def create_gui():
     app.disableButton('Accept')
     app.disableButton('Decline')
 
-
     #Chat buttons
     app.addButton('Send', buttons, 4, 1)
     app.addLabel('filler', '', 4, 2)
@@ -236,15 +235,8 @@ def create_gui():
     app.stopLabelFrame()
     app.stopFrame()  # Outer_frame
 
-    # GENERAL DESIGN
-    app.setFont(size=10, family='Verdana', weight='bold')
-    ta1 = app.getTextAreaWidget("Message_entry")
-    ta2 = app.getTextAreaWidget("Display")
-    ta1.config(font=("Verdana 10 bold"))
-    ta2.config(font=("Verdana 10 bold"))
 
-    # GAME SUBWINDOW
-
+    # GAME SUB WINDOW
     app.startSubWindow('GameWindow')
     app.startLabelFrame('Tic Tac Toe')
     app.addEmptyLabel('emptyLabel1')
@@ -253,6 +245,7 @@ def create_gui():
     app.addLabel('Player2', 'Player 2', 1, 2)
     app.addEmptyLabel('emptyLabel2')
 
+    # Game buttons
     app.startFrame('gamebuttonframe', 2, 0, colspan=3, rowspan=3)
     app.addImageButton("1", buttons, "game_empty.gif", 0, 0)
     app.addImageButton("2", buttons, "game_empty.gif", 0, 1)
@@ -265,8 +258,17 @@ def create_gui():
     app.addImageButton("9", buttons, "game_empty.gif", 2, 2)
 
     app.stopFrame()
+    app.addLabel('el1', ' ', 5, 2)
+    app.addButton('Quit game', buttons,6, 2)
     app.stopLabelFrame()
     app.stopSubWindow()
+
+    # GENERAL DESIGN
+    app.setFont(size=10, family='Verdana', weight='bold')
+    ta1 = app.getTextAreaWidget("Message_entry")
+    ta2 = app.getTextAreaWidget("Display")
+    ta1.config(font=("Verdana 10 bold"))
+    ta2.config(font=("Verdana 10 bold"))
 
 if __name__ == '__main__':
 
