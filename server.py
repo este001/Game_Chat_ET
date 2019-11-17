@@ -50,15 +50,16 @@ def receive_messages(conn):
             elif message[0:1].decode('utf-8') == "S":
                 broadcast_message(message, clients, conn)
             elif message[0:1].decode('utf-8') == "C":
-                # TODO challange logic
+                # TODO challenge logic
                 game_challenge(conn,message,clients)
             elif '@' in message.decode('utf-8'):
                 whisper_message(message.decode('utf-8'), clients, conn)
 
     except ConnectionResetError as cre:
-        print('recieve message:', cre)
+        print('receive message', cre)
         conn.close()
         del clients[conn]
+        send_message(online_users(clients), clients)
 
 
 def online_users(clients):
@@ -79,7 +80,7 @@ def client_connected(conn):
             conn.sendall('0'.encode('utf-8'))
             clients[conn] = user_name.decode('utf-8')
             broadcast_message(message="Shas connected".encode('utf-8'), conn=conn, clients=clients)
-            time.sleep(0.5)
+            time.sleep(1)
             send_message(online_users(clients), clients)
             receive_messages(conn)
             break
