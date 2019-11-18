@@ -37,14 +37,13 @@ def game_challenge(conn, message, clients):
     player_game_status[clients[conn]] = False
     player_to_challenge = message[1:]
     if player_availability(player_to_challenge):
+
         player_game_status[player_to_challenge] = False
         for c in clients:
             if clients[c] == player_to_challenge:
                 c.sendall(f'C{challenger}'.encode('utf-8'))
     else:
-        for c in clients:
-            if clients[c] == player_to_challenge:
-                c.sendall(f'D'.encode('utf-8'))
+        conn.sendall(f'D'.encode('utf-8'))
 
 
 def whisper_message(whispered_message, clients, conn):
