@@ -24,13 +24,27 @@ def broadcast_message(message, clients, conn):
         c.sendall(message)
 
 
+def player_availability(player):
+    if player_game_status[player]:
+        return True
+    else:
+        return False
+
+
 def game_challenge(conn, message, clients):
     message = message.decode('utf-8')
     challenger = clients[conn]
+    player_game_status[clients[conn]] = False
     player_to_challenge = message[1:]
-    for c in clients:
-        if clients[c] == player_to_challenge:
-            c.sendall(f'C{challenger}'.encode('utf-8'))
+    if player_availability(player_to_challenge):
+        player_game_status[player_to_challenge] = False
+        for c in clients:
+            if clients[c] == player_to_challenge:
+                c.sendall(f'C{challenger}'.encode('utf-8'))
+    else:
+        for c in clients:
+            if clients[c] == player_to_challenge:
+                c.sendall(f'D'.encode('utf-8'))
 
 
 def whisper_message(whispered_message, clients, conn):
@@ -38,7 +52,7 @@ def whisper_message(whispered_message, clients, conn):
     user_to_whisper_list = [user.strip('@') for user in user_to_whisper_list if user[0] == '@']
     for c in clients:
         if [True for user in user_to_whisper_list if clients[c] == user]:
-            c.sendall(f'{clients[conn]} > {whispered_message}'.encode('utf-8')  )
+            c.sendall(f'{clients[conn]} > {whispered_message}'.encode('utf-8'))
 
 
 def receive_messages(conn):
@@ -51,7 +65,7 @@ def receive_messages(conn):
                 broadcast_message(message, clients, conn)
             elif message[0:1].decode('utf-8') == "C":
                 # TODO challenge logic
-                game_challenge(conn,message,clients)
+                game_challenge(conn, message, clients)
             elif '@' in message.decode('utf-8'):
                 whisper_message(message.decode('utf-8'), clients, conn)
 
@@ -79,6 +93,7 @@ def client_connected(conn):
         else:
             conn.sendall('0'.encode('utf-8'))
             clients[conn] = user_name.decode('utf-8')
+            player_game_status[user_name.decode('utf-8')] = True
             broadcast_message(message="Shas connected".encode('utf-8'), conn=conn, clients=clients)
             time.sleep(1)
             send_message(online_users(clients), clients)
@@ -92,6 +107,8 @@ if __name__ == '__main__':
 
     # Dictionary for clients connected
     clients = {}
+    # Dict for player challenge status
+    player_game_status = {}
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((IP, PORT))
