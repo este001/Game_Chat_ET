@@ -5,8 +5,9 @@ import time
 
 """Client for game/chat application"""
 
-def reset_challenger_buttons():
 
+def reset_challenger_buttons():
+    """Resents all challenge related buttons to default"""
 
     app.setLabel('challenger_name', '')
     app.setButtonFg('Accept', 'Black')
@@ -24,6 +25,8 @@ def strip_header(message):
 
 
 def challenger_colour_change():
+    """Sets all challenge related buttons to alert-mode"""
+
     while True:
         app.setLabelFg('challenger_name', 'Red')
         time.sleep(1.50)
@@ -31,50 +34,67 @@ def challenger_colour_change():
         time.sleep(0.5)
 
 
+# RECEIVE
+def receive_broadcast(incoming_message):
+    """Displays incoming broadcast messages"""
+
+    message = strip_header(incoming_message)
+    app.setTextArea('Display', message + '\n\n')
+
+
+def receive_challenge(incoming_message):
+
+    challenge_message = f"<<< {incoming_message[1:]} has challenged you >>>\n\n"
+    app.setTextArea('Display', challenge_message)
+
+    app.enableButton('Accept')
+    app.enableButton('Decline')
+    app.setLabel('challenger_name', incoming_message[1:])
+
+    app.setButtonFg('Accept', 'Red')
+    app.setButtonFg('Decline', 'Red')
+    app.setLabelFg('challengelabel', 'Red')
+
+    colour_thread = threading.Thread(target=challenger_colour_change, daemon=True)
+    colour_thread.start()
+
+
+def receive_online_users(incoming_message):
+    names = incoming_message.lstrip("O")
+    users_online = names.split('-')
+    users_online.pop()
+
+    app.clearListBox('Online_users_listbox')
+    app.addListItems('Online_users_listbox', users_online)
+
+
+# TODO
+def receive_game_turn(incoming_message):
+    opponents_move = strip_header(incoming_message)
+    app.setButtonImage(opponents_move, )
+
+
 def receive_from_server():
     try:
         while True:
             incoming_message = client_socket.recv(1024)
-
             if not incoming_message:
                 break
-
             incoming_message = incoming_message.decode('utf-8')
-
             if incoming_message[0:1] == "S":
-                message = strip_header(incoming_message)
-                app.setTextArea('Display', message + '\n\n')
-
+                receive_broadcast(incoming_message)
             elif incoming_message[0:1] == "C":
-
-                challenge_message = f"---{incoming_message[1:]} has challenged you---\n\n"
-                app.setTextArea('Display', challenge_message)
-
-                app.enableButton('Accept')
-                app.enableButton('Decline')
-                app.setLabel('challenger_name', incoming_message[1:])
-
-                app.setButtonFg('Accept', 'Red')
-                app.setButtonFg('Decline', 'Red')
-                app.setLabelFg('challengelabel', 'Red')
-
-                colour_thread = threading.Thread(target=challenger_colour_change, daemon=True)
-                colour_thread.start()
-
-                # TODO challange logic
+                receive_challenge(incoming_message)
             elif incoming_message[0:1] == "O":
-                names = incoming_message.lstrip("O")
-                users_online = names.split('-')
-                users_online.pop()
-
-                app.clearListBox('Online_users_listbox')
-                app.addListItems('Online_users_listbox', users_online)
-
+                receive_online_users(incoming_message)
+            elif incoming_message[0:1] == "G":
+                receive_game_turn(incoming_message)
 
     except ConnectionAbortedError as error:
         print('Receive_from_server error: ', error)
 
 
+# BUTTONS
 def send_message_button():
 
     my_message = app.getTextArea('Message_entry')
@@ -95,6 +115,8 @@ def name_submit_button():
         if not name_validation:
             app.destroySubWindow('NameSubWindow')
             app.show()
+            app.disableEnter()
+            app.enableEnter(send_message_button)
             receive_messages = threading.Thread(target=receive_from_server, daemon=True)
             receive_messages.start()
 
@@ -123,12 +145,22 @@ def decline_challenge_button():
     client_socket.sendall(f"S{message}".encode('utf-8'))
 
 
-def challenge_player():
+def challenge_player_button():
     challenged_player = app.getListBox('Online_users_listbox')[0]
 
     if challenged_player != user_name:
         challenge = f"C{challenged_player}".encode('utf-8')
         client_socket.sendall(challenge)
+
+
+# TODO
+def game_button(button_name):
+    global game_turn
+
+    if game_turn:
+        message = f"G{button_name}{user_name}".encode('utf-8')
+        client_socket.sendall(message)
+        game_turn = False
 
 
 def buttons(name):
@@ -139,18 +171,18 @@ def buttons(name):
                    'Close': cancel_button,
                    'Accept': accept_challenge_button,
                    'Decline': decline_challenge_button,
-                   'CHALLENGE': challenge_player}
+                   'CHALLENGE': challenge_player_button}
 
     for k, v in button_dict.items():
         if k == name:
             v()
 
 
-# TODO Create subwindow for game
 def create_gui():
 
     # SUBWINDOW LOGIN
     app.startSubWindow("NameSubWindow", modal=True)
+    app.enableEnter(name_submit_button)
     app.setSize("280x135")
     app.setResizable(canResize=False)
     app.startLabelFrame('ChatGame', 1, 0)
@@ -164,6 +196,7 @@ def create_gui():
     app.addLabel("usernamelabel", "- Enter Username -", 0, 0, colspan=2)
     app.getLabelWidget("usernamelabel").config(font="verdana 11 bold")
     app.addEntry('NameEntry', 1, 0, colspan=2)
+    app.setFocus('NameEntry')
     app.setEntryAnchor('NameEntry', 'center')
 
     # Subwindow Button
@@ -238,28 +271,44 @@ def create_gui():
 
     # GAME SUB WINDOW
     app.startSubWindow('GameWindow')
-    app.startLabelFrame('Tic Tac Toe')
+    app.addLabel('lefttopfiller', ' ', 0, 0)
+    app.addLabel('righttopfiller', ' ', 0, 2)
+    app.startLabelFrame('Tic Tac Toe', 0, 1)
+
     app.addEmptyLabel('emptyLabel1')
+    app.setPadding(3,8)
+    app.setSticky('w')
     app.addLabel('Player1', 'Player 1', 1, 0)
-    app.addLabel('vs', 'vs.', 1, 1)
+    app.setLabelFg('Player1', 'mediumblue')
+    app.setSticky('n')
+    app.addLabel('vs', 'VS.', 1, 1)
+    app.setSticky('e')
     app.addLabel('Player2', 'Player 2', 1, 2)
+    app.setLabelFg('Player2', 'red')
     app.addEmptyLabel('emptyLabel2')
 
     # Game buttons
     app.startFrame('gamebuttonframe', 2, 0, colspan=3, rowspan=3)
-    app.addImageButton("1", buttons, "game_empty.gif", 0, 0)
-    app.addImageButton("2", buttons, "game_empty.gif", 0, 1)
-    app.addImageButton("3", buttons, "game_empty.gif", 0, 2)
-    app.addImageButton("4", buttons, "game_empty.gif", 1, 0)
-    app.addImageButton("5", buttons, "game_empty.gif", 1, 1)
-    app.addImageButton("6", buttons, "game_empty.gif", 1, 2)
-    app.addImageButton("7", buttons, "game_empty.gif", 2, 0)
-    app.addImageButton("8", buttons, "game_empty.gif", 2, 1)
-    app.addImageButton("9", buttons, "game_empty.gif", 2, 2)
+    app.addImageButton("2", game_button, "game_empty.gif", 0, 1)
+    app.addImageButton("3", game_button, "game_empty.gif", 0, 2)
+    app.addImageButton("1", game_button, "game_empty.gif", 0, 0)
+    app.addImageButton("4", game_button, "game_empty.gif", 1, 0)
+    app.addImageButton("5", game_button, "game_empty.gif", 1, 1)
+    app.addImageButton("6", game_button, "game_empty.gif", 1, 2)
+    app.addImageButton("7", game_button, "game_empty.gif", 2, 0)
+    app.addImageButton("8", game_button, "game_empty.gif", 2, 1)
+    app.addImageButton("9", game_button, "game_empty.gif", 2, 2)
 
     app.stopFrame()
-    app.addLabel('el1', ' ', 5, 2)
-    app.addButton('Quit game', buttons,6, 2)
+    app.setSticky('w')
+    app.setPadding(3, 10)
+    app.addLabel('winner', 'Winner: ', 5, 0)
+    app.addLabel('winner_name', 'winner_name', 5, 1, colspan=2)
+    app.getLabelWidget('winner').config(font=("Verdana 11 bold"))
+    app.getLabelWidget('winner_name').config(font=("Verdana 11 bold"))
+
+    app.setSticky('s')
+    app.addButton('Quit game', buttons,6, 1)
     app.stopLabelFrame()
     app.stopSubWindow()
 
@@ -270,7 +319,11 @@ def create_gui():
     ta1.config(font=("Verdana 10 bold"))
     ta2.config(font=("Verdana 10 bold"))
 
+
 if __name__ == '__main__':
+
+    game_turn = False
+    game_finished = False
 
     online_users = []
     user_name = ''

@@ -1,7 +1,7 @@
 import client
 import unittest
 
-"""Pytest file for client"""
+"""Test file for client"""
 
 
 class ClientTest(unittest.TestCase):
