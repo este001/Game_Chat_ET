@@ -3,7 +3,6 @@ import threading
 import time
 
 
-# TODO kanske bryta ut send till alla, så man bara har ett ställe där servern skickar från// bätrre tester?
 def send_message(message, clients):
     for c in clients:
         c.sendall(message.encode('utf'))
@@ -24,6 +23,17 @@ def broadcast_message(message, clients, conn):
         c.sendall(message)
 
 
+def player_accepted_challenge(clients, name, conn):
+    pass
+
+
+def player_declined_challenge(clients, name, conn):
+    player_game_status[clients[conn]] = True
+    player_game_status[name] = True
+    message = f"{clients[conn]} has declined a challenge from {name}"
+    send_message(message)
+
+
 def player_availability(player):
     if player_game_status[player]:
         return True
@@ -36,13 +46,14 @@ def game_challenge(conn, message, clients):
     challenger = clients[conn]
     player_game_status[clients[conn]] = False
     player_to_challenge = message[1:]
-    if player_availability(player_to_challenge):
 
+    if player_availability(player_to_challenge):
         player_game_status[player_to_challenge] = False
         for c in clients:
             if clients[c] == player_to_challenge:
-                c.sendall(f'C{challenger}'.encode('utf-8'))
+                c.sendall(f'C{challenger}'.encode('ut1f-8'))
     else:
+        player_game_status[clients[conn]] = True
         conn.sendall(f'D'.encode('utf-8'))
 
 
@@ -60,11 +71,18 @@ def receive_messages(conn):
             message = conn.recv(1024)
             if not message:
                 break
+
             elif message[0:1].decode('utf-8') == "S":
                 broadcast_message(message, clients, conn)
+
             elif message[0:1].decode('utf-8') == "C":
                 # TODO challenge logic
                 game_challenge(conn, message, clients)
+
+            elif message[0:1].decode('utf-8') == "D":
+                message = message[0:1].decode('utf-8')
+                player_declined_challenge(clients, message, conn)
+
             elif '@' in message.decode('utf-8'):
                 whisper_message(message.decode('utf-8'), clients, conn)
 
