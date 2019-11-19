@@ -86,9 +86,10 @@ def receive_online_users(incoming_message):
 def receive_game_turn(incoming_message):
 
     game_move = incoming_message[1:3]
-    board_state = incoming_message[3:4]
-    player = incoming_message[4:]
+    board_state = incoming_message[-1]
+    player = incoming_message[3:-1]
     app.setButtonImage(game_move, player_dict[player])
+    app.disableButton(game_move)
     check_board_state(board_state, player)
 
 
@@ -188,7 +189,7 @@ def send_message_button():
 def name_submit_button():
 
     name = app.getEntry('NameEntry')
-    if len(name) != 0:
+    if len(name) > 0 and len(name) <= 10:
         client_socket.sendall(name.encode('utf-8'))
         name_validation = bool(int(client_socket.recv(1024).decode('utf-8')))
 
@@ -198,7 +199,7 @@ def name_submit_button():
             app.errorBox('Invalid name', 'Name is not available\nPlease try another one.')
             app.clearEntry('NameEntry')
     else:
-        app.errorBox('Invalid name', 'Name needs to contain at least one character')
+        app.errorBox('Invalid name', 'Name needs to be 1-10 characters')
 
 
 def cancel_button():
@@ -254,6 +255,8 @@ def game_button(button_name):
 
     global game_turn
     if game_turn:
+        app.setButtonImage(button_name, player_dict[user_name])
+        app.disableButton(button_name)
         message = f"G{button_name}{user_name}".encode('utf-8')
         client_socket.sendall(message)
 
