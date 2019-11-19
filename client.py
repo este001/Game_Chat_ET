@@ -74,17 +74,20 @@ def receive_challenge(incoming_message):
     app.setLabelFg('challengelabel', 'Red')
     app.disableButton("CHALLENGE")
 
+    # TODO Fix this
     colour_thread = threading.Thread(target=challenger_colour_change, daemon=True)
     colour_thread.start()
 
 
+# TODO
 def receive_accepted_challenge(incomning_message):
     pass
 
 
 def receive_declined_challenge(incoming_message):
     """Prints message to challenger"""
-    message = incoming_message[1:]
+
+    message = strip_header(incoming_message)
 
     app.setTextArea('Display', f'<<< {message} >>>\n\n')
     app.enableButton('CHALLENGE')
@@ -110,8 +113,16 @@ def receive_from_server():
             elif incoming_message[0:1] == "D":
                 receive_declined_challenge(incoming_message)
 
-    except ConnectionAbortedError as error:
+    except (ConnectionAbortedError, ConnectionResetError) as error:
         print('Receive_from_server error: ', error)
+        app.setTextArea('Display', '---LOST CONNECTION TO SERVER---')
+        app.disableButton('CHALLENGE')
+        app.disableButton('Send')
+        app.disableButton('Accept')
+        app.disableButton('Decline')
+        app.disableEnter()
+
+
 
 
 # BUTTONS
@@ -167,8 +178,6 @@ def decline_challenge_button():
     client_socket.sendall(f"D{challenger_name}".encode('utf-8'))
 
 
-
-# TODO Fix the self-challenge bug
 def challenge_player_button():
     """Challenge selected player"""
 
