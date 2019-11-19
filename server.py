@@ -59,11 +59,14 @@ def game_challenge(conn, message, clients):
 
 
 def whisper_message(whispered_message, clients, conn):
+    whispered_message = whispered_message[1:]
     user_to_whisper_list = whispered_message.split()
     user_to_whisper_list = [user.strip('@') for user in user_to_whisper_list if user[0] == '@']
     for c in clients:
         if [True for user in user_to_whisper_list if clients[c] == user]:
-            c.sendall(f'{clients[conn]} > {whispered_message}'.encode('utf-8'))
+            c.sendall(f'S{clients[conn]} whispered > {whispered_message}'.encode('utf-8'))
+    conn.sendall(f'S{clients[conn]} whispered > {whispered_message}'.encode('utf-8'))
+
 
 
 def receive_messages(conn):
@@ -72,6 +75,9 @@ def receive_messages(conn):
             message = conn.recv(1024)
             if not message:
                 break
+
+            elif '@' in message.decode('utf-8'):
+                whisper_message(message.decode('utf-8'), clients, conn)
 
             elif message[0:1].decode('utf-8') == "S":
                 broadcast_message(message, clients, conn)
@@ -86,8 +92,6 @@ def receive_messages(conn):
             elif message[0:1].decode('utf-8') == "D":
                 player_declined_challenge(clients, message, conn)
 
-            elif '@' in message.decode('utf-8'):
-                whisper_message(message.decode('utf-8'), clients, conn)
 
     except ConnectionResetError as cre:
         print('receive message', cre)
