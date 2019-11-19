@@ -28,6 +28,7 @@ def player_accepted_challenge(clients, challenger, challenged):
     for c in clients:
         if clients[c] == challenger:
             c.sendall(f"A{clients[c]} has accepted {clients[challenged]} challenge".encode('utf-8'))
+            challenged.sendall(f"A{clients[c]} has accepted {clients[challenged]} challenge".encode('utf-8'))
 
 
 
