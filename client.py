@@ -53,8 +53,13 @@ def receive_online_users(incoming_message):
 
 # TODO
 def receive_game_turn(incoming_message):
-    opponents_move = strip_header(incoming_message)
-    app.setButtonImage(opponents_move, )
+
+    global game_turn
+
+    game_move = incoming_message[1:3]
+    player = incoming_message[3:]
+    app.setButtonImage(game_move, player_dict[player])
+    game_turn = True
 
 
 def receive_challenge(incoming_message):
@@ -79,9 +84,20 @@ def receive_challenge(incoming_message):
     colour_thread.start()
 
 
-# TODO
-def receive_accepted_challenge(incomning_message):
-    pass
+def receive_accepted_challenge(incoming_message):
+
+    global player_dict
+    global game_turn
+    game_turn = True
+
+    message = strip_header(incoming_message)
+    app.setTextArea('Display', f"<<< {message} >>>")
+    app.setLabel('Player1', user_name)
+    app.setLabel('Player2', challenged_player)
+    player_dict = {user_name: 'game_cross.gif',
+                   challenged_player: 'game_circle.gif'}
+
+    app.showSubWindow(f"GameWindow - {user_name}", hide=False)
 
 
 def receive_declined_challenge(incoming_message):
@@ -113,6 +129,8 @@ def receive_from_server():
             elif incoming_message[0:1] == "D":
                 receive_declined_challenge(incoming_message)
 
+
+
     except (ConnectionAbortedError, ConnectionResetError) as error:
         print('Receive_from_server error: ', error)
         app.setTextArea('Display', '---LOST CONNECTION TO SERVER---')
@@ -121,8 +139,6 @@ def receive_from_server():
         app.disableButton('Accept')
         app.disableButton('Decline')
         app.disableEnter()
-
-
 
 
 # BUTTONS
@@ -138,6 +154,7 @@ def send_message_button():
 def name_submit_button():
 
     global user_name
+
     name = app.getEntry('NameEntry')
     if len(name) != 0:
         client_socket.sendall(name.encode('utf-8'))
@@ -148,7 +165,9 @@ def name_submit_button():
             app.setTitle(f"ChatGameTE - {name}")
             app.show()
             app.disableEnter()
+            user_name = name
             app.enableEnter(send_message_button)
+            create_game_gui()
             receive_messages = threading.Thread(target=receive_from_server, daemon=True)
             receive_messages.start()
 
@@ -164,11 +183,24 @@ def cancel_button():
     app.stop()
 
 
-# TODO
 def accept_challenge_button():
+
+    global player_dict
+    global game_turn
+    game_turn = False
+
     reset_challenger_buttons()
-    accept_message = f"A{user_name} has accepted a challenge from"
-    app.showSubWindow("GameWindow", hide=False)
+    app.setLabel('Player1', challenger_name)
+    app.setLabel('Player2', user_name)
+
+    player_dict = {challenger_name: 'game_cross.gif',
+                   user_name: 'game_circle.gif'}
+
+    accept_message = f"A{challenger_name}".encode('utf-8')
+    client_socket.sendall(accept_message)
+
+
+    app.showSubWindow(f"GameWindow - {user_name}", hide=False)
 
 
 def decline_challenge_button():
@@ -181,7 +213,10 @@ def decline_challenge_button():
 def challenge_player_button():
     """Challenge selected player"""
 
+    global challenged_player
+
     challenged_player = app.getListBox('Online_users_listbox')[0]
+
     if challenged_player != user_name:
         challenge = f"C{challenged_player}".encode('utf-8')
         client_socket.sendall(challenge)
@@ -214,6 +249,52 @@ def buttons(name):
     for k, v in button_dict.items():
         if k == name:
             v()
+
+
+def create_game_gui():
+
+    # GAME SUB WINDOW
+    app.startSubWindow(f'GameWindow - {user_name}')
+    app.addLabel('lefttopfiller', ' ', 0, 0)
+    app.addLabel('righttopfiller', ' ', 0, 2)
+    app.startLabelFrame('Tic Tac Toe', 0, 1)
+
+    app.addEmptyLabel('emptyLabel1')
+    app.setPadding(3,8)
+    app.setSticky('w')
+    app.addLabel('Player1', 'Player 1', 1, 0)
+    app.setLabelFg('Player1', 'mediumblue')
+    app.setSticky('n')
+    app.addLabel('vs', 'VS.', 1, 1)
+    app.setSticky('e')
+    app.addLabel('Player2', 'Player 2', 1, 2)
+    app.setLabelFg('Player2', 'red')
+    app.addEmptyLabel('emptyLabel2')
+
+    # Game buttons
+    app.startFrame('gamebuttonframe', 2, 0, colspan=3, rowspan=3)
+    app.addImageButton("00", game_button, "game_empty.gif", 0, 0)
+    app.addImageButton("01", game_button, "game_empty.gif", 0, 1)
+    app.addImageButton("02", game_button, "game_empty.gif", 0, 2)
+    app.addImageButton("10", game_button, "game_empty.gif", 1, 0)
+    app.addImageButton("11", game_button, "game_empty.gif", 1, 1)
+    app.addImageButton("12", game_button, "game_empty.gif", 1, 2)
+    app.addImageButton("20", game_button, "game_empty.gif", 2, 0)
+    app.addImageButton("21", game_button, "game_empty.gif", 2, 1)
+    app.addImageButton("22", game_button, "game_empty.gif", 2, 2)
+
+    app.stopFrame()
+    app.setSticky('w')
+    app.setPadding(3, 10)
+    app.addLabel('winner', 'Winner: ', 5, 0)
+    app.addLabel('winner_name', 'winner_name', 5, 1, colspan=2)
+    app.getLabelWidget('winner').config(font=("Verdana 11 bold"))
+    app.getLabelWidget('winner_name').config(font=("Verdana 11 bold"))
+
+    app.setSticky('s')
+    app.addButton('Quit game', buttons,6, 1)
+    app.stopLabelFrame()
+    app.stopSubWindow()
 
 
 def create_gui():
@@ -308,49 +389,6 @@ def create_gui():
     app.stopFrame()  # Outer_frame
 
 
-    # GAME SUB WINDOW
-    app.startSubWindow('GameWindow')
-    app.addLabel('lefttopfiller', ' ', 0, 0)
-    app.addLabel('righttopfiller', ' ', 0, 2)
-    app.startLabelFrame('Tic Tac Toe', 0, 1)
-
-    app.addEmptyLabel('emptyLabel1')
-    app.setPadding(3,8)
-    app.setSticky('w')
-    app.addLabel('Player1', 'Player 1', 1, 0)
-    app.setLabelFg('Player1', 'mediumblue')
-    app.setSticky('n')
-    app.addLabel('vs', 'VS.', 1, 1)
-    app.setSticky('e')
-    app.addLabel('Player2', 'Player 2', 1, 2)
-    app.setLabelFg('Player2', 'red')
-    app.addEmptyLabel('emptyLabel2')
-
-    # Game buttons
-    app.startFrame('gamebuttonframe', 2, 0, colspan=3, rowspan=3)
-    app.addImageButton("1", game_button, "game_empty.gif", 0, 0)
-    app.addImageButton("2", game_button, "game_empty.gif", 0, 1)
-    app.addImageButton("3", game_button, "game_empty.gif", 0, 2)
-    app.addImageButton("4", game_button, "game_empty.gif", 1, 0)
-    app.addImageButton("5", game_button, "game_empty.gif", 1, 1)
-    app.addImageButton("6", game_button, "game_empty.gif", 1, 2)
-    app.addImageButton("7", game_button, "game_empty.gif", 2, 0)
-    app.addImageButton("8", game_button, "game_empty.gif", 2, 1)
-    app.addImageButton("9", game_button, "game_empty.gif", 2, 2)
-
-    app.stopFrame()
-    app.setSticky('w')
-    app.setPadding(3, 10)
-    app.addLabel('winner', 'Winner: ', 5, 0)
-    app.addLabel('winner_name', 'winner_name', 5, 1, colspan=2)
-    app.getLabelWidget('winner').config(font=("Verdana 11 bold"))
-    app.getLabelWidget('winner_name').config(font=("Verdana 11 bold"))
-
-    app.setSticky('s')
-    app.addButton('Quit game', buttons,6, 1)
-    app.stopLabelFrame()
-    app.stopSubWindow()
-
     # GENERAL DESIGN
     app.setFont(size=10, family='Verdana', weight='bold')
     ta1 = app.getTextAreaWidget("Message_entry")
@@ -361,11 +399,16 @@ def create_gui():
 
 if __name__ == '__main__':
 
-    game_turn = False
-    game_finished = False
+
     online_users = []
+
     user_name = ''
     challenger_name = ''
+    challenged_player = ''
+    game_turn = False
+    game_finished = False
+    player_dict = {}
+
 
     IP = "127.0.0.1"
     PORT = 1234
