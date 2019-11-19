@@ -72,6 +72,7 @@ def receive_challenge(incoming_message):
     app.setButtonFg('Accept', 'Red')
     app.setButtonFg('Decline', 'Red')
     app.setLabelFg('challengelabel', 'Red')
+    app.disableButton("CHALLENGE")
 
     colour_thread = threading.Thread(target=challenger_colour_change, daemon=True)
     colour_thread.start()
@@ -81,10 +82,12 @@ def receive_accepted_challenge(incomning_message):
     pass
 
 
-def receive_declined_challenge():
+def receive_declined_challenge(incoming_message):
     """Prints message to challenger"""
+    message = incoming_message[1:]
 
-    app.setTextArea('Display', '<<< Player is currently unavailable >>>\n\n')
+    app.setTextArea('Display', f'<<< {message} >>>\n\n')
+    app.enableButton('CHALLENGE')
 
 
 def receive_from_server():
@@ -105,7 +108,7 @@ def receive_from_server():
             elif incoming_message[0:1] == "A":
                 receive_accepted_challenge(incoming_message)
             elif incoming_message[0:1] == "D":
-                receive_declined_challenge()
+                receive_declined_challenge(incoming_message)
 
     except ConnectionAbortedError as error:
         print('Receive_from_server error: ', error)
@@ -131,6 +134,7 @@ def name_submit_button():
 
         if not name_validation:
             app.destroySubWindow('NameSubWindow')
+            app.setTitle(f"ChatGameTE - {name}")
             app.show()
             app.disableEnter()
             app.enableEnter(send_message_button)
@@ -163,6 +167,7 @@ def decline_challenge_button():
     client_socket.sendall(f"D{challenger_name}".encode('utf-8'))
 
 
+
 # TODO Fix the self-challenge bug
 def challenge_player_button():
     """Challenge selected player"""
@@ -171,6 +176,7 @@ def challenge_player_button():
     if challenged_player != user_name:
         challenge = f"C{challenged_player}".encode('utf-8')
         client_socket.sendall(challenge)
+        app.disableButton("CHALLENGE")
 
 
 # TODO
@@ -358,6 +364,6 @@ if __name__ == '__main__':
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((IP, PORT))
 
-    app = gui()
+    app = gui("ChatGameTE")
     create_gui()
     app.go(startWindow='NameSubWindow')
