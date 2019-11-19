@@ -34,6 +34,23 @@ def challenger_colour_change():
         time.sleep(0.5)
 
 
+
+def main_window_initiation(name):
+
+    global user_name
+    app.destroySubWindow('NameSubWindow')
+    app.setTitle(f"ChatGameTE - {name}")
+
+    app.disableEnter()
+    user_name = name
+    app.enableEnter(send_message_button)
+
+    create_game_gui()
+    app.show()
+    receive_messages = threading.Thread(target=receive_from_server, daemon=True)
+    receive_messages.start()
+
+
 # RECEIVE
 def receive_broadcast(incoming_message):
     """Displays incoming broadcast messages"""
@@ -147,6 +164,7 @@ def receive_from_server():
 
 
 # BUTTONS
+
 def send_message_button():
 
     my_message = app.getTextArea('Message_entry')
@@ -158,24 +176,13 @@ def send_message_button():
 
 def name_submit_button():
 
-    global user_name
-
     name = app.getEntry('NameEntry')
     if len(name) != 0:
         client_socket.sendall(name.encode('utf-8'))
         name_validation = bool(int(client_socket.recv(1024).decode('utf-8')))
 
         if not name_validation:
-            app.destroySubWindow('NameSubWindow')
-            app.setTitle(f"ChatGameTE - {name}")
-            app.show()
-            app.disableEnter()
-            user_name = name
-            app.enableEnter(send_message_button)
-            create_game_gui()
-            receive_messages = threading.Thread(target=receive_from_server, daemon=True)
-            receive_messages.start()
-
+            main_window_initiation(name)
         else:
             app.errorBox('Invalid name', 'Name is not available\nPlease try another one.')
             app.clearEntry('NameEntry')
