@@ -23,8 +23,12 @@ def broadcast_message(message, clients, conn):
         c.sendall(message)
 
 
-def player_accepted_challenge(clients, name, conn):
-    pass
+def player_accepted_challenge(clients, challenger, challenged):
+    challenger = challenger.decode('utf-8')
+    for c in clients:
+        if clients[c] == challenger:
+            c.sendall(f"A{clients[c]} has accepted {clients[challenged]} challenge".encode('utf-8'))
+
 
 
 def player_declined_challenge(clients, name, conn):
@@ -68,7 +72,6 @@ def whisper_message(whispered_message, clients, conn):
     conn.sendall(f'S{clients[conn]} whispered > {whispered_message}'.encode('utf-8'))
 
 
-
 def receive_messages(conn):
     try:
         while True:
@@ -88,6 +91,9 @@ def receive_messages(conn):
 
                 else:
                     conn.sendall(f'DPlayer is unavailable'.encode('utf-8'))
+
+            elif message[0:1].decode('utf-8') == "A":
+                player_accepted_challenge(clients, message[1:], conn)
 
             elif message[0:1].decode('utf-8') == "D":
                 player_declined_challenge(clients, message, conn)
