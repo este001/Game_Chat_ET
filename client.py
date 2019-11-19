@@ -170,7 +170,7 @@ def challenge_player_button():
     challenged_player = app.getListBox('Online_users_listbox')[0]
     if challenged_player != user_name:
         challenge = f"C{challenged_player}".encode('utf-8')
-        client_socket.sendall(challenge)
+        client_socket.sendall(challenge)x
 
 
 # TODO
