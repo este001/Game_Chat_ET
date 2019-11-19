@@ -1,6 +1,27 @@
 import socket
 import threading
 import time
+import tic_tac_toe as ttt
+
+
+def Game(player1, player2):
+    try:
+        board = ttt.start_game()
+        symbol = {player1: 'x', player2: 'o'}
+        while True:
+            game_message = player1.recv(1024)
+            game_message = game_message.decode('utf-8')
+            if game_message[0] == "G":
+                print("DET ÄR ETT G")
+            coordinate = (int(game_message[1:2]), int(game_message[2:3]))
+
+            #ttt.user_input(coordinate,board, symbol[game_message[]] )
+            if ttt.check_win_condition(board, game_message[1:3]):
+                # rec G22Tim/Este
+                break
+
+    except Exception as e:
+        print(e)
 
 
 def send_message(message, clients):
@@ -23,13 +44,11 @@ def broadcast_message(message, clients, conn):
         c.sendall(message)
 
 
-def player_accepted_challenge(clients, challenger, challenged):
-    challenger = challenger.decode('utf-8')
+def player_accepted_challenge(clients, player1, player2):
+    player1 = player1.decode('utf-8')
     for c in clients:
-        if clients[c] == challenger:
-            c.sendall(f"A{clients[c]} has accepted {clients[challenged]} challenge".encode('utf-8'))
-            #challenged.sendall(f"A{clients[c]} has accepted {clients[challenged]} challenge".encode('utf-8'))
-
+        if clients[c] == player1:
+            c.sendall(f"A{clients[c]} has accepted {clients[player2]} challenge".encode('utf-8'))
 
 
 def player_declined_challenge(clients, name, conn):
@@ -89,16 +108,15 @@ def receive_messages(conn):
             elif message[0:1].decode('utf-8') == "C":
                 if player_availability(message[1:].decode('utf-8')):
                     game_challenge(conn, message, clients)
-
                 else:
                     conn.sendall(f'DPlayer is unavailable'.encode('utf-8'))
-
             elif message[0:1].decode('utf-8') == "A":
                 player_accepted_challenge(clients, message[1:], conn)
+                game_thread = threading.Thread(target=Game, args=(clients[conn], message[1:]), daemon=True)
+                game_thread.start()
 
             elif message[0:1].decode('utf-8') == "D":
                 player_declined_challenge(clients, message, conn)
-
 
     except ConnectionResetError as cre:
         print('receive message', cre)
