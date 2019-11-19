@@ -25,7 +25,7 @@ def strip_header(message):
 
 
 def challenger_colour_change():
-    """Sets all challenge related buttons to alert-mode"""
+    """Sets challenger name and buttons to flashing-mode"""
 
     while True:
         app.setLabelFg('challenger_name', 'Red')
@@ -40,23 +40,6 @@ def receive_broadcast(incoming_message):
 
     message = strip_header(incoming_message)
     app.setTextArea('Display', message + '\n\n')
-
-
-def receive_challenge(incoming_message):
-
-    challenge_message = f"<<< {incoming_message[1:]} has challenged you >>>\n\n"
-    app.setTextArea('Display', challenge_message)
-
-    app.enableButton('Accept')
-    app.enableButton('Decline')
-    app.setLabel('challenger_name', incoming_message[1:])
-
-    app.setButtonFg('Accept', 'Red')
-    app.setButtonFg('Decline', 'Red')
-    app.setLabelFg('challengelabel', 'Red')
-
-    colour_thread = threading.Thread(target=challenger_colour_change, daemon=True)
-    colour_thread.start()
 
 
 def receive_online_users(incoming_message):
@@ -74,6 +57,36 @@ def receive_game_turn(incoming_message):
     app.setButtonImage(opponents_move, )
 
 
+def receive_challenge(incoming_message):
+
+    global challenger_name
+    challenger_name = incoming_message[1:]
+
+    challenge_message = f"<<< {incoming_message[1:]} has challenged you >>>\n\n"
+    app.setTextArea('Display', challenge_message)
+
+    app.enableButton('Accept')
+    app.enableButton('Decline')
+    app.setLabel('challenger_name', incoming_message[1:])
+
+    app.setButtonFg('Accept', 'Red')
+    app.setButtonFg('Decline', 'Red')
+    app.setLabelFg('challengelabel', 'Red')
+
+    colour_thread = threading.Thread(target=challenger_colour_change, daemon=True)
+    colour_thread.start()
+
+
+def receive_accepted_challenge(incomning_message):
+    pass
+
+
+def receive_declined_challenge():
+    """Prints message to challenger"""
+
+    app.setTextArea('Display', '<<< Player is currently unavailable >>>\n\n')
+
+
 def receive_from_server():
     try:
         while True:
@@ -89,6 +102,10 @@ def receive_from_server():
                 receive_online_users(incoming_message)
             elif incoming_message[0:1] == "G":
                 receive_game_turn(incoming_message)
+            elif incoming_message[0:1] == "A":
+                receive_accepted_challenge(incoming_message)
+            elif incoming_message[0:1] == "D":
+                receive_declined_challenge()
 
     except ConnectionAbortedError as error:
         print('Receive_from_server error: ', error)
@@ -135,19 +152,22 @@ def cancel_button():
 # TODO
 def accept_challenge_button():
     reset_challenger_buttons()
+    accept_message = f"A{user_name} has accepted a challenge from"
     app.showSubWindow("GameWindow", hide=False)
 
 
-# TODO
 def decline_challenge_button():
+    """Sends a decline message to server"""
+
     reset_challenger_buttons()
-    message = "has declined a challenge"
-    client_socket.sendall(f"S{message}".encode('utf-8'))
+    client_socket.sendall(f"D{challenger_name}".encode('utf-8'))
 
 
+# TODO Fix the self-challenge bug
 def challenge_player_button():
-    challenged_player = app.getListBox('Online_users_listbox')[0]
+    """Challenge selected player"""
 
+    challenged_player = app.getListBox('Online_users_listbox')[0]
     if challenged_player != user_name:
         challenge = f"C{challenged_player}".encode('utf-8')
         client_socket.sendall(challenge)
@@ -155,6 +175,8 @@ def challenge_player_button():
 
 # TODO
 def game_button(button_name):
+    """Sends the game-button name to server"""
+
     global game_turn
 
     if game_turn:
@@ -164,6 +186,7 @@ def game_button(button_name):
 
 
 def buttons(name):
+    """Directs pressed button to right function"""
 
     button_dict = {'Submit': name_submit_button,
                    'Cancel': cancel_button,
@@ -179,6 +202,7 @@ def buttons(name):
 
 
 def create_gui():
+    """Creates the gui for the application"""
 
     # SUBWINDOW LOGIN
     app.startSubWindow("NameSubWindow", modal=True)
@@ -289,9 +313,9 @@ def create_gui():
 
     # Game buttons
     app.startFrame('gamebuttonframe', 2, 0, colspan=3, rowspan=3)
+    app.addImageButton("1", game_button, "game_empty.gif", 0, 0)
     app.addImageButton("2", game_button, "game_empty.gif", 0, 1)
     app.addImageButton("3", game_button, "game_empty.gif", 0, 2)
-    app.addImageButton("1", game_button, "game_empty.gif", 0, 0)
     app.addImageButton("4", game_button, "game_empty.gif", 1, 0)
     app.addImageButton("5", game_button, "game_empty.gif", 1, 1)
     app.addImageButton("6", game_button, "game_empty.gif", 1, 2)
@@ -324,9 +348,10 @@ if __name__ == '__main__':
 
     game_turn = False
     game_finished = False
-
     online_users = []
     user_name = ''
+    challenger_name = ''
+
     IP = "127.0.0.1"
     PORT = 1234
 
