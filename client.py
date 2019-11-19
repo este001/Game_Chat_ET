@@ -59,6 +59,7 @@ def receive_game_turn(incoming_message):
     game_move = incoming_message[1:3]
     player = incoming_message[3:]
     app.setButtonImage(game_move, player_dict[player])
+    app.setLabel('player_turn_name', user_name)
     game_turn = True
 
 
@@ -86,16 +87,20 @@ def receive_challenge(incoming_message):
 
 def receive_accepted_challenge(incoming_message):
 
+    global opponent
     global player_dict
     global game_turn
     game_turn = True
 
+    opponent = challenged_player
     message = strip_header(incoming_message)
     app.setTextArea('Display', f"<<< {message} >>>")
     app.setLabel('Player1', user_name)
-    app.setLabel('Player2', challenged_player)
+    app.setLabel('Player2', opponent)
+    app.setLabel('player_turn_name', user_name)
     player_dict = {user_name: 'game_cross.gif',
-                   challenged_player: 'game_circle.gif'}
+                   opponent: 'game_circle.gif'}
+
 
     app.showSubWindow(f"GameWindow - {user_name}", hide=False)
 
@@ -185,13 +190,16 @@ def cancel_button():
 
 def accept_challenge_button():
 
+    global opponent
     global player_dict
     global game_turn
     game_turn = False
 
+    opponent = challenger_name
     reset_challenger_buttons()
-    app.setLabel('Player1', challenger_name)
+    app.setLabel('Player1', opponent)
     app.setLabel('Player2', user_name)
+    app.setLabel('player_turn_name', challenger_name)
 
     player_dict = {challenger_name: 'game_cross.gif',
                    user_name: 'game_circle.gif'}
@@ -223,7 +231,6 @@ def challenge_player_button():
         app.disableButton("CHALLENGE")
 
 
-# TODO
 def game_button(button_name):
     """Sends the game-button name to server"""
 
@@ -232,6 +239,7 @@ def game_button(button_name):
     if game_turn:
         message = f"G{button_name}{user_name}".encode('utf-8')
         client_socket.sendall(message)
+        app.setLabel('player_turn_name', opponent)
         game_turn = False
 
 
@@ -286,13 +294,15 @@ def create_game_gui():
     app.stopFrame()
     app.setSticky('w')
     app.setPadding(3, 10)
-    app.addLabel('winner', 'Winner: ', 5, 0)
-    app.addLabel('winner_name', 'winner_name', 5, 1, colspan=2)
+    app.addLabel('player_turn', f"Player's turn:", 5, 0)
+    app.addLabel('player_turn_name', '', 5, 1, colspan=2)
+    app.addLabel('winner', 'Winner: ', 6, 0)
+    app.addLabel('winner_name', '', 6, 1, colspan=2)
     app.getLabelWidget('winner').config(font=("Verdana 11 bold"))
     app.getLabelWidget('winner_name').config(font=("Verdana 11 bold"))
 
     app.setSticky('s')
-    app.addButton('Quit game', buttons,6, 1)
+    app.addButton('Quit game', buttons,7, 2)
     app.stopLabelFrame()
     app.stopSubWindow()
 
@@ -403,6 +413,7 @@ if __name__ == '__main__':
     online_users = []
 
     user_name = ''
+    opponent = ''
     challenger_name = ''
     challenged_player = ''
     game_turn = False
