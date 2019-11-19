@@ -29,9 +29,10 @@ def player_accepted_challenge(clients, name, conn):
 
 def player_declined_challenge(clients, name, conn):
     challenger = name[1:]
+    challenger = challenger.decode('utf-8')
     player_game_status[clients[conn]] = True
-    player_game_status[challenger.decode('utf-8')] = True
-    message = f"D{clients[conn]} has declined a challenge from {challenger.decode('utf-8')}"
+    player_game_status[challenger] = True
+    message = f"D{clients[conn]} has declined a challenge from {challenger}"
     for c in clients:
         if clients[c] == challenger:
             c.sendall(message.encode('utf-8'))
@@ -51,14 +52,10 @@ def game_challenge(conn, message, clients):
     player_game_status[clients[conn]] = False
     player_to_challenge = message[1:]
 
-    if player_availability(player_to_challenge):
-        player_game_status[player_to_challenge] = False
-        for c in clients:
-            if clients[c] == player_to_challenge:
-                c.sendall(f'C{challenger}'.encode('utf-8'))
-    else:
-        player_game_status[clients[conn]] = True
-        conn.sendall(f'D'.encode('utf-8'))
+    player_game_status[player_to_challenge] = False
+    for c in clients:
+        if clients[c] == player_to_challenge:
+            c.sendall(f'C{challenger}'.encode('utf-8'))
 
 
 def whisper_message(whispered_message, clients, conn):
@@ -80,8 +77,11 @@ def receive_messages(conn):
                 broadcast_message(message, clients, conn)
 
             elif message[0:1].decode('utf-8') == "C":
-                # TODO challenge logic
-                game_challenge(conn, message, clients)
+                if player_availability(message[1:].decode('utf-8')):
+                    game_challenge(conn, message, clients)
+
+                else:
+                    conn.sendall(f'DPlayer is unavailable'.encode('utf-8'))
 
             elif message[0:1].decode('utf-8') == "D":
                 player_declined_challenge(clients, message, conn)
@@ -91,6 +91,7 @@ def receive_messages(conn):
 
     except ConnectionResetError as cre:
         print('receive message', cre)
+
         conn.close()
         del clients[conn]
         send_message(online_users(clients), clients)
