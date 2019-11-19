@@ -34,7 +34,6 @@ def challenger_colour_change():
         time.sleep(0.5)
 
 
-
 def main_window_initiation(name):
 
     global user_name
@@ -49,6 +48,21 @@ def main_window_initiation(name):
     app.show()
     receive_messages = threading.Thread(target=receive_from_server, daemon=True)
     receive_messages.start()
+
+
+def check_board_state(board_state, player):
+
+    global game_turn
+
+    if board_state == '1':
+        app.setLabel('player_turn_name', user_name)
+        game_turn = True
+    elif board_state == '2':
+        app.setLabel('winner_name', player)
+        app.enableButton('CHALLENGE')
+    elif board_state == '3':
+        app.setLabel('winner_name', '-TIE-')
+        app.enableButton('CHALLENGE')
 
 
 # RECEIVE
@@ -71,13 +85,11 @@ def receive_online_users(incoming_message):
 # TODO
 def receive_game_turn(incoming_message):
 
-    global game_turn
-
     game_move = incoming_message[1:3]
-    player = incoming_message[3:]
+    board_state = incoming_message[3:4]
+    player = incoming_message[4:]
     app.setButtonImage(game_move, player_dict[player])
-    app.setLabel('player_turn_name', user_name)
-    game_turn = True
+    check_board_state(board_state, player)
 
 
 def receive_challenge(incoming_message):
@@ -164,7 +176,6 @@ def receive_from_server():
 
 
 # BUTTONS
-
 def send_message_button():
 
     my_message = app.getTextArea('Message_entry')
@@ -242,10 +253,10 @@ def game_button(button_name):
     """Sends the game-button name to server"""
 
     global game_turn
-
     if game_turn:
         message = f"G{button_name}{user_name}".encode('utf-8')
         client_socket.sendall(message)
+
         app.setLabel('player_turn_name', opponent)
         game_turn = False
 
