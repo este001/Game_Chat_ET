@@ -31,7 +31,7 @@ def player_declined_challenge(clients, name, conn):
     player_game_status[clients[conn]] = True
     player_game_status[name] = True
     message = f"{clients[conn]} has declined a challenge from {name}"
-    send_message(message)
+    send_message(message, clients)
 
 
 def player_availability(player):
@@ -51,7 +51,7 @@ def game_challenge(conn, message, clients):
         player_game_status[player_to_challenge] = False
         for c in clients:
             if clients[c] == player_to_challenge:
-                c.sendall(f'C{challenger}'.encode('ut1f-8'))
+                c.sendall(f'C{challenger}'.encode('utf-8'))
     else:
         player_game_status[clients[conn]] = True
         conn.sendall(f'D'.encode('utf-8'))
