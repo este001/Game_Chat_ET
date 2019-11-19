@@ -31,7 +31,7 @@ def player_declined_challenge(clients, name, conn):
     player_challenged = name[1:]
     player_game_status[clients[conn]] = True
     player_game_status[name] = True
-    message = f"S{clients[conn]} has declined a challenge from {player_challenged}"
+    message = f"S{clients[conn]} has declined a challenge from {player_challenged.decode('utf-8')}"
     send_message(message, clients)
 
 
