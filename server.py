@@ -28,10 +28,10 @@ def player_accepted_challenge(clients, name, conn):
 
 
 def player_declined_challenge(clients, name, conn):
-    player_challenged = name[1:]
+    challenger = name[1:]
     player_game_status[clients[conn]] = True
-    player_game_status[player_challenged] = True
-    message = f"S{clients[conn]} has declined a challenge from {player_challenged.decode('utf-8')}"
+    player_game_status[challenger.decode('utf-8')] = True
+    message = f"S{clients[conn]} has declined a challenge from {challenger.decode('utf-8')}"
     send_message(message, clients)
 
 
