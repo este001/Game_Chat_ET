@@ -112,7 +112,7 @@ def receive_messages(conn):
                     conn.sendall(f'DPlayer is unavailable'.encode('utf-8'))
             elif message[0:1].decode('utf-8') == "A":
                 player_accepted_challenge(clients, message[1:], conn)
-                game_thread = threading.Thread(target=Game, args=(clients[conn], message[1:]), daemon=True)
+                game_thread = threading.Thread(target=Game, args=(conn, message[1:]), daemon=True)
                 game_thread.start()
 
             elif message[0:1].decode('utf-8') == "D":
@@ -152,7 +152,7 @@ def client_connected(conn):
 
 
 if __name__ == '__main__':
-    IP = "127.0.0.1"
+    IP = "172.20.200.180"
     PORT = 1234
 
     # Dictionary for clients connected
