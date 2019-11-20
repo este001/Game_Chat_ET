@@ -5,23 +5,7 @@ import tic_tac_toe as ttt
 
 
 def Game(player1, player2):
-    try:
-        board = ttt.start_game()
-        symbol = {player1: 'x', player2: 'o'}
-        while True:
-            game_message = player1.recv(1024)
-            game_message = game_message.decode('utf-8')
-            if game_message[0] == "G":
-                print("DET ÄR ETT G")
-            coordinate = (int(game_message[1:2]), int(game_message[2:3]))
-
-            #ttt.user_input(coordinate,board, symbol[game_message[]] )
-            if ttt.check_win_condition(board, game_message[1:3]):
-                # rec G22Tim/Este
-                break
-
-    except Exception as e:
-        print(e)
+    pass
 
 
 def send_message(message, clients):
@@ -94,6 +78,7 @@ def whisper_message(whispered_message, clients, conn):
 
 def receive_messages(conn):
     try:
+        board = {}
         while True:
             message = conn.recv(1024)
             if message.decode('utf-8')[0] == "Q":
@@ -111,9 +96,12 @@ def receive_messages(conn):
                 else:
                     conn.sendall(f'DPlayer is unavailable'.encode('utf-8'))
             elif message[0:1].decode('utf-8') == "A":
+
                 player_accepted_challenge(clients, message[1:], conn)
-                game_thread = threading.Thread(target=Game, args=(conn, message[1:]), daemon=True)
-                game_thread.start()
+
+
+            elif message[0:1].decode('utf-8') == "G":
+                pass
 
             elif message[0:1].decode('utf-8') == "D":
                 player_declined_challenge(clients, message, conn)
@@ -159,7 +147,6 @@ def client_connected(conn):
 if __name__ == '__main__':
     IP = "127.0.0.1"
     PORT = 1234
-
     # Dictionary for clients connected
     clients = {}
     # Dict for player challenge status
