@@ -96,7 +96,7 @@ def receive_messages(conn):
     try:
         while True:
             message = conn.recv(1024)
-            if not message:
+            if message.decode('utf-8')[0] == "Q":
                 break
 
             elif '@' in message.decode('utf-8'):
@@ -117,6 +117,11 @@ def receive_messages(conn):
 
             elif message[0:1].decode('utf-8') == "D":
                 player_declined_challenge(clients, message, conn)
+
+        print(f"{clients[conn]} has disconnected")
+        conn.close()
+        del clients[conn]
+        send_message(online_users(clients), clients)
 
     except ConnectionResetError as cre:
         print('receive message', cre)
