@@ -85,6 +85,7 @@ def disable_all_game_buttons():
     app.disableButton('21')
     app.disableButton('22')
 
+
 def start_game():
 
     global board
@@ -113,9 +114,10 @@ def receive_game_turn(incoming_message):
     global board
 
     game_move = incoming_message[1:3]
+    coordinates = int(game_move)
     player = incoming_message[3:-1]
 
-    board = ttt.user_input(game_move, board, player_dict_symbol[player])
+    board = ttt.user_input(coordinates, board, player_dict_symbol[player])
     app.setButtonImage(game_move, player_dict[player])
     app.disableButton(game_move)
 
@@ -293,10 +295,11 @@ def game_button(button_name):
 
     global game_turn
     global board
+    coordinates = int(button_name)
 
     if game_turn:
 
-        board = ttt.user_input(button_name, board, player_dict_symbol[user_name])
+        board = ttt.user_input(coordinates, board, player_dict_symbol[user_name])
 
         app.setButtonImage(button_name, player_dict[user_name])
         app.disableButton(button_name)
