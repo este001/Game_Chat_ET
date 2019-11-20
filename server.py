@@ -152,7 +152,7 @@ def client_connected(conn):
 
 
 if __name__ == '__main__':
-    IP = "172.20.200.180"
+    IP = "127.0.0.1"
     PORT = 1234
 
     # Dictionary for clients connected

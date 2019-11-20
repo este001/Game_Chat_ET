@@ -6,7 +6,6 @@ import time
 """Client for game/chat application"""
 
 
-
 def reset_challenger_buttons():
     """Resents all challenge related buttons to default"""
 
@@ -52,6 +51,7 @@ def main_window_initiation(name):
 
 
 def check_board_state(board_state, player):
+    """Checks if the game should contiue"""
 
     global game_turn
 
@@ -84,7 +84,6 @@ def receive_online_users(incoming_message):
 
 
 def receive_game_turn(incoming_message):
-
     game_move = incoming_message[1:3]
     board_state = incoming_message[-1]
     player = incoming_message[3:-1]
@@ -94,7 +93,6 @@ def receive_game_turn(incoming_message):
 
 
 def receive_challenge(incoming_message):
-
     global challenger_name
     challenger_name = incoming_message[1:]
 
@@ -116,7 +114,6 @@ def receive_challenge(incoming_message):
 
 
 def receive_accepted_challenge(incoming_message):
-
     global opponent
     global player_dict
     global game_turn
@@ -130,7 +127,6 @@ def receive_accepted_challenge(incoming_message):
     app.setLabel('player_turn_name', user_name)
     player_dict = {user_name: 'game_cross.gif',
                    opponent: 'game_circle.gif'}
-
 
     app.showSubWindow(f"GameWindow - {user_name}", hide=False)
 
@@ -164,8 +160,6 @@ def receive_from_server():
             elif incoming_message[0:1] == "D":
                 receive_declined_challenge(incoming_message)
 
-
-
     except (ConnectionAbortedError, ConnectionResetError) as error:
         print('Receive_from_server error: ', error)
         app.setTextArea('Display', '---LOST CONNECTION TO SERVER---')
@@ -178,7 +172,6 @@ def receive_from_server():
 
 # BUTTONS
 def send_message_button():
-
     my_message = app.getTextArea('Message_entry')
     if len(my_message) > 0:
         my_message = f"S{my_message}".encode('utf-8')
@@ -187,9 +180,8 @@ def send_message_button():
 
 
 def name_submit_button():
-
     name = app.getEntry('NameEntry')
-    if len(name) > 0 and len(name) <= 10:
+    if 0 < len(name) <= 10:
         client_socket.sendall(name.encode('utf-8'))
         name_validation = bool(int(client_socket.recv(1024).decode('utf-8')))
 
@@ -203,12 +195,12 @@ def name_submit_button():
 
 
 def cancel_button():
+    client_socket.sendall('Q'.encode('utf-8'))
     client_socket.close()
     app.stop()
 
 
 def accept_challenge_button():
-
     global opponent
     global player_dict
     global game_turn
@@ -225,7 +217,6 @@ def accept_challenge_button():
 
     accept_message = f"A{challenger_name}".encode('utf-8')
     client_socket.sendall(accept_message)
-
 
     app.showSubWindow(f"GameWindow - {user_name}", hide=False)
 
@@ -282,7 +273,6 @@ def buttons(name):
 
 # GUI
 def create_game_gui():
-
     # GAME SUB WINDOW
     app.startSubWindow(f'GameWindow - {user_name}')
     app.addLabel('lefttopfiller', ' ', 0, 0)
@@ -290,7 +280,7 @@ def create_game_gui():
     app.startLabelFrame('Tic Tac Toe', 0, 1)
 
     app.addEmptyLabel('emptyLabel1')
-    app.setPadding(3,8)
+    app.setPadding(3, 8)
     app.setSticky('w')
     app.addLabel('Player1', 'Player 1', 1, 0)
     app.setLabelFg('Player1', 'mediumblue')
@@ -324,7 +314,7 @@ def create_game_gui():
     app.getLabelWidget('winner_name').config(font=("Verdana 11 bold"))
 
     app.setSticky('s')
-    app.addButton('Quit game', buttons,7, 2)
+    app.addButton('Quit game', buttons, 7, 2)
     app.stopLabelFrame()
     app.stopSubWindow()
 
@@ -364,7 +354,6 @@ def create_gui():
     app.stopLabelFrame()
     app.stopSubWindow()
 
-
     # MAIN WINDOW
     app.setSize('750x400')
     app.setResizable(canResize=False)
@@ -398,12 +387,12 @@ def create_gui():
     app.addLabel('bl1', ' ', 1, 0)
     app.addLabel('bl2', ' ', 1, 4)
 
-    #Challange buttons
+    # Challange buttons
     app.addButton('CHALLENGE', buttons, 0, 1, colspan=3)
     app.addLabel('challengelabel', 'Challenged by:', 1, 1, colspan=3)
-    app.setLabelFg('challengelabel', 'darkgray')                        # Turns red when challanged
+    app.setLabelFg('challengelabel', 'darkgray')
     app.getLabelWidget('challengelabel').config(font="verdana 11 bold")
-    app.addLabel('challenger_name', '', 2, 1, colspan=3)                # Challengers name goes in here when challanged
+    app.addLabel('challenger_name', '', 2, 1, colspan=3)
     app.getLabelWidget('challenger_name').config(font="verdana 14 bold")
 
     app.addButton('Accept', buttons, 3, 1)
@@ -411,7 +400,7 @@ def create_gui():
     app.disableButton('Accept')
     app.disableButton('Decline')
 
-    #Chat buttons
+    # Chat buttons
     app.addButton('Send', buttons, 4, 1)
     app.addLabel('filler', '', 4, 2)
     app.addButton('Close', buttons, 4, 3)
@@ -420,18 +409,15 @@ def create_gui():
     app.stopLabelFrame()
     app.stopFrame()  # Outer_frame
 
-
     # GENERAL DESIGN
     app.setFont(size=10, family='Verdana', weight='bold')
     ta1 = app.getTextAreaWidget("Message_entry")
     ta2 = app.getTextAreaWidget("Display")
-    ta1.config(font=("Verdana 10 bold"))
-    ta2.config(font=("Verdana 10 bold"))
+    ta1.config(font="Verdana 10 bold")
+    ta2.config(font="Verdana 10 bold")
 
 
 if __name__ == '__main__':
-
-
     online_users = []
 
     user_name = ''
@@ -442,8 +428,7 @@ if __name__ == '__main__':
     game_finished = False
     player_dict = {}
 
-    IP = "172.20.200.180"  # SKOLAN
-    #IP = "127.0.0.1"
+    IP = "127.0.0.1"
     PORT = 1234
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
