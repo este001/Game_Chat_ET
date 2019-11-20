@@ -2,6 +2,7 @@ import socket
 from appJar import gui
 import threading
 import time
+import tic_tac_toe as ttt
 
 """Client for game/chat application"""
 
@@ -35,7 +36,6 @@ def challenger_colour_change():
 
 
 def main_window_initiation(name):
-
     global user_name
     app.destroySubWindow('NameSubWindow')
     app.setTitle(f"ChatGameTE - {name}")
@@ -50,28 +50,45 @@ def main_window_initiation(name):
     receive_messages.start()
 
 
-# def check_board_state(board_state, player):
-#     """Checks if the game should continue"""
-#
-#
-#     if board_state == '1':
-#         app.setLabel('player_turn_name', user_name)
-#
-#     elif board_state == '2':
-#         app.setLabel('winner_name', player)
-#         app.enableButton('CHALLENGE')
-#     elif board_state == '3':
-#         app.setLabel('winner_name', '-TIE-')
-#         app.enableButton('CHALLENGE')
+def check_board_state(board_state, player):
+    """Checks if the game should continue"""
+
+    if board_state == '1':
+        app.setLabel('player_turn_name', user_name)
+
+    elif board_state == '2':
+        app.setLabel('winner_name', player)
+        app.enableButton('CHALLENGE')
+    elif board_state == '3':
+        app.setLabel('winner_name', '-TIE-')
+        app.enableButton('CHALLENGE')
 
 
 def checkStop():
+
     if app.yesNoBox("Confirm Exit", "Are you sure you want to exit the application?"):
         client_socket.sendall("Q".encode('utf-8'))
         client_socket.close()
         return True
     else:
         return False
+
+
+def disable_all_game_buttons():
+    app.disableButton('00')
+    app.disableButton('01')
+    app.disableButton('02')
+    app.disableButton('10')
+    app.disableButton('11')
+    app.disableButton('12')
+    app.disableButton('20')
+    app.disableButton('21')
+    app.disableButton('22')
+
+def start_game():
+
+    global board
+    board = ttt.start_game()
 
 
 # RECEIVE
@@ -92,16 +109,27 @@ def receive_online_users(incoming_message):
 
 
 def receive_game_turn(incoming_message):
-
     global game_turn
+    global board
 
     game_move = incoming_message[1:3]
-    player = incoming_message[3:]
+    player = incoming_message[3:-1]
+
+    board = ttt.user_input(game_move, board, player_dict_symbol[player])
     app.setButtonImage(game_move, player_dict[player])
     app.disableButton(game_move)
-    app.setLabel('player_turn_name', user_name)
-    game_turn = True
-    # check_board_state(board_state, player)
+
+    if ttt.check_win_condition(board, player_dict_symbol[player]):
+        app.setLabel('winner_name', player)
+        disable_all_game_buttons()
+        print('Winner')
+    elif ttt.tie(board):
+        app.setLabel('winner_name', '--TIE--')
+        disable_all_game_buttons()
+        print('Tie')
+    else:
+        app.setLabel('player_turn_name', user_name)
+        game_turn = True
 
 
 def receive_challenge(incoming_message):
@@ -129,6 +157,8 @@ def receive_accepted_challenge(incoming_message):
     global opponent
     global player_dict
     global game_turn
+    global player_dict_symbol
+
     game_turn = True
 
     opponent = challenged_player
@@ -139,6 +169,8 @@ def receive_accepted_challenge(incoming_message):
     app.setLabel('player_turn_name', user_name)
     player_dict = {user_name: 'game_cross.gif',
                    opponent: 'game_circle.gif'}
+    player_dict_symbol = {user_name: 'x',
+                          opponent: 'o'}
 
     app.showSubWindow(f"GameWindow - {user_name}", hide=False)
 
@@ -216,6 +248,7 @@ def accept_challenge_button():
     global opponent
     global player_dict
     global game_turn
+    global player_dict_symbol
     game_turn = False
 
     opponent = challenger_name
@@ -226,6 +259,8 @@ def accept_challenge_button():
 
     player_dict = {challenger_name: 'game_cross.gif',
                    user_name: 'game_circle.gif'}
+    player_dict_symbol = {challenged_player: 'x',
+                          user_name: 'o'}
 
     accept_message = f"A{challenger_name}".encode('utf-8')
     client_socket.sendall(accept_message)
@@ -257,14 +292,29 @@ def game_button(button_name):
     """Sends the game-button name to server"""
 
     global game_turn
+    global board
+
     if game_turn:
+
+        board = ttt.user_input(button_name, board, player_dict_symbol[user_name])
+
         app.setButtonImage(button_name, player_dict[user_name])
         app.disableButton(button_name)
+
         message = f"G{button_name}{opponent}".encode('utf-8')
         client_socket.sendall(message)
 
-        app.setLabel('player_turn_name', opponent)
-        game_turn = False
+        if ttt.check_win_condition(board, player_dict_symbol[user_name]):
+            app.setLabel('winner_name', user_name)
+            disable_all_game_buttons()
+            print('Winner')
+        elif ttt.tie(board):
+            app.setLabel('winner_name', '--TIE--')
+            disable_all_game_buttons()
+            print('Tie')
+        else:
+            app.setLabel('player_turn_name', opponent)
+            game_turn = False
 
 
 def buttons(name):
@@ -433,6 +483,8 @@ def create_gui():
 if __name__ == '__main__':
     online_users = []
 
+    board = ttt.start_game()
+
     user_name = ''
     opponent = ''
     challenger_name = ''
@@ -440,6 +492,7 @@ if __name__ == '__main__':
     game_turn = False
     game_finished = False
     player_dict = {}
+    player_dict_symbol = {}
 
     IP = "127.0.0.1"
     PORT = 1234

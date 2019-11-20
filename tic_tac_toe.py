@@ -48,8 +48,8 @@ def tie(board):
 def check_win_condition(board, player_symbol):
     if horizontal_win_condition(board, player_symbol) or vertical_win_condition(board, player_symbol) or diagonal_win_condition(board, player_symbol):
         return True
-    elif tie(board):
-        return True
+    else:
+        return False
 
 
 def user_input(coordinate, board, player_symbol):
