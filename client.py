@@ -66,6 +66,10 @@ def check_board_state(board_state, player):
         app.enableButton('CHALLENGE')
 
 
+def checkStop():
+    return app.yesNoBox("Confirm Exit", "Are you sure you want to exit the application?")
+
+
 # RECEIVE
 def receive_broadcast(incoming_message):
     """Displays incoming broadcast messages"""
@@ -415,6 +419,7 @@ def create_gui():
     ta2 = app.getTextAreaWidget("Display")
     ta1.config(font="Verdana 10 bold")
     ta2.config(font="Verdana 10 bold")
+    app.setStopFunction(checkStop)
 
 
 if __name__ == '__main__':
