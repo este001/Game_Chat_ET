@@ -6,6 +6,7 @@ import time
 """Client for game/chat application"""
 
 
+
 def reset_challenger_buttons():
     """Resents all challenge related buttons to default"""
 
@@ -82,7 +83,6 @@ def receive_online_users(incoming_message):
     app.addListItems('Online_users_listbox', users_online)
 
 
-# TODO
 def receive_game_turn(incoming_message):
 
     game_move = incoming_message[1:3]
@@ -124,7 +124,7 @@ def receive_accepted_challenge(incoming_message):
 
     opponent = challenged_player
     message = strip_header(incoming_message)
-    app.setTextArea('Display', f"<<< {message} >>>")
+    app.setTextArea('Display', f"<<< {message} >>>\n\n")
     app.setLabel('Player1', user_name)
     app.setLabel('Player2', opponent)
     app.setLabel('player_turn_name', user_name)
@@ -280,6 +280,7 @@ def buttons(name):
             v()
 
 
+# GUI
 def create_game_gui():
 
     # GAME SUB WINDOW
@@ -441,8 +442,8 @@ if __name__ == '__main__':
     game_finished = False
     player_dict = {}
 
-
-    IP = "127.0.0.1"
+    IP = "172.20.200.180"  # SKOLAN
+    #IP = "127.0.0.1"
     PORT = 1234
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
