@@ -67,7 +67,12 @@ def check_board_state(board_state, player):
 
 
 def checkStop():
-    return app.yesNoBox("Confirm Exit", "Are you sure you want to exit the application?")
+    if app.yesNoBox("Confirm Exit", "Are you sure you want to exit the application?"):
+        client_socket.sendall("Q".encode('utf-8'))
+        client_socket.close()
+        return True
+    else:
+        return False
 
 
 # RECEIVE
