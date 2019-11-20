@@ -50,20 +50,19 @@ def main_window_initiation(name):
     receive_messages.start()
 
 
-def check_board_state(board_state, player):
-    """Checks if the game should contiue"""
-
-    global game_turn
-
-    if board_state == '1':
-        app.setLabel('player_turn_name', user_name)
-        game_turn = True
-    elif board_state == '2':
-        app.setLabel('winner_name', player)
-        app.enableButton('CHALLENGE')
-    elif board_state == '3':
-        app.setLabel('winner_name', '-TIE-')
-        app.enableButton('CHALLENGE')
+# def check_board_state(board_state, player):
+#     """Checks if the game should continue"""
+#
+#
+#     if board_state == '1':
+#         app.setLabel('player_turn_name', user_name)
+#
+#     elif board_state == '2':
+#         app.setLabel('winner_name', player)
+#         app.enableButton('CHALLENGE')
+#     elif board_state == '3':
+#         app.setLabel('winner_name', '-TIE-')
+#         app.enableButton('CHALLENGE')
 
 
 def checkStop():
@@ -93,12 +92,16 @@ def receive_online_users(incoming_message):
 
 
 def receive_game_turn(incoming_message):
+
+    global game_turn
+
     game_move = incoming_message[1:3]
-    board_state = incoming_message[-1]
-    player = incoming_message[3:-1]
+    player = incoming_message[3:]
     app.setButtonImage(game_move, player_dict[player])
     app.disableButton(game_move)
-    check_board_state(board_state, player)
+    app.setLabel('player_turn_name', user_name)
+    game_turn = True
+    # check_board_state(board_state, player)
 
 
 def receive_challenge(incoming_message):
@@ -257,7 +260,7 @@ def game_button(button_name):
     if game_turn:
         app.setButtonImage(button_name, player_dict[user_name])
         app.disableButton(button_name)
-        message = f"G{button_name}{user_name}".encode('utf-8')
+        message = f"G{button_name}{opponent}".encode('utf-8')
         client_socket.sendall(message)
 
         app.setLabel('player_turn_name', opponent)

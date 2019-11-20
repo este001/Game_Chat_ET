@@ -99,9 +99,14 @@ def receive_messages(conn):
 
                 player_accepted_challenge(clients, message[1:], conn)
 
-
             elif message[0:1].decode('utf-8') == "G":
-                pass
+
+                receiver = message[3:].decode('utf-8')
+                game_move = message[1:3].decode('utf-8')
+                for c in clients:
+                    if clients[c] == receiver:
+                        message = f"G{game_move}{clients[conn]}"
+                        c.sendall(message.encode('utf-8'))
 
             elif message[0:1].decode('utf-8') == "D":
                 player_declined_challenge(clients, message, conn)
