@@ -28,11 +28,12 @@ def strip_header(message):
 def challenger_colour_change():
     """Sets challenger name and buttons to flashing-mode"""
 
-    while True:
+    for i in range(5):
         app.setLabelFg('challenger_name', 'Red')
         time.sleep(1.50)
         app.setLabelFg('challenger_name', 'linen')
         time.sleep(0.5)
+    app.setLabelFg('challenger_name', 'Red')
 
 
 def main_window_initiation(name):
@@ -50,7 +51,7 @@ def main_window_initiation(name):
     receive_messages.start()
 
 
-def check_stop():
+def confirm_exit():
     """Confirms if user really wants to quit"""
 
     if app.yesNoBox("Confirm Exit", "Are you sure you want to exit the application?"):
@@ -59,6 +60,54 @@ def check_stop():
         return True
     else:
         return False
+
+
+# GAME FUNCTIONS
+
+def start_game():
+    global board
+    board = ttt.start_game()
+
+
+def check_user_game_state():
+
+    global game_turn
+    if ttt.check_win_condition(board, player_dict_symbol[user_name]):
+        app.setLabel('winner_name', user_name)
+        disable_all_game_buttons()
+        print('Winner')
+    elif ttt.tie(board):
+        app.setLabel('winner_name', '--TIE--')
+        disable_all_game_buttons()
+        print('Tie')
+    else:
+        app.setLabel('player_turn_name', opponent)
+        game_turn = False
+
+
+def check_opponent_game_state():
+
+    global game_turn
+    if ttt.check_win_condition(board, player_dict_symbol[opponent]):
+        app.setLabel('winner_name', opponent)
+        disable_all_game_buttons()
+        print('Winner')
+    elif ttt.tie(board):
+        app.setLabel('winner_name', '--TIE--')
+        disable_all_game_buttons()
+        print('Tie')
+    else:
+        app.setLabel('player_turn_name', user_name)
+        game_turn = True
+
+
+def place_player_mark(player, game_board, coordinates):
+
+    game_board = ttt.user_input(coordinates, game_board, player_dict_symbol[player])
+    app.setButtonImage(coordinates, player_dict[player])
+    app.disableButton(coordinates)
+
+    return game_board
 
 
 def disable_all_game_buttons():
@@ -71,11 +120,6 @@ def disable_all_game_buttons():
     app.disableButton('20')
     app.disableButton('21')
     app.disableButton('22')
-
-
-def start_game():
-    global board
-    board = ttt.start_game()
 
 
 # RECEIVE
@@ -96,39 +140,25 @@ def receive_online_users(incoming_message):
 
 
 def receive_game_turn(incoming_message):
+
     global game_turn
     global board
 
-    game_move = incoming_message[1:3]
-    player = incoming_message[3:]
-
-    board = ttt.user_input(game_move, board, player_dict_symbol[player])
-    app.setButtonImage(game_move, player_dict[player])
-    app.disableButton(game_move)
-
-    if ttt.check_win_condition(board, player_dict_symbol[player]):
-        app.setLabel('winner_name', player)
-        disable_all_game_buttons()
-        print('Winner')
-    elif ttt.tie(board):
-        app.setLabel('winner_name', '--TIE--')
-        disable_all_game_buttons()
-        print('Tie')
-    else:
-        app.setLabel('player_turn_name', user_name)
-        game_turn = True
+    coordinates = incoming_message[1:3]
+    board = place_player_mark(opponent, board, coordinates)
+    check_opponent_game_state()
 
 
 def receive_challenge(incoming_message):
-    global challenger_name
-    challenger_name = incoming_message[1:]
+    global opponent
+    opponent = incoming_message[1:]
 
-    challenge_message = f"<<< {incoming_message[1:]} has challenged you >>>\n\n"
+    challenge_message = f"<<< {opponent} has challenged you >>>\n\n"
     app.setTextArea('Display', challenge_message)
 
     app.enableButton('Accept')
     app.enableButton('Decline')
-    app.setLabel('challenger_name', incoming_message[1:])
+    app.setLabel('challenger_name', opponent)
 
     app.setButtonFg('Accept', 'Red')
     app.setButtonFg('Decline', 'Red')
@@ -141,14 +171,12 @@ def receive_challenge(incoming_message):
 
 
 def receive_accepted_challenge(incoming_message):
-    global opponent
-    global player_dict
-    global game_turn
-    global player_dict_symbol
 
+    global player_dict
+    global player_dict_symbol
+    global game_turn
     game_turn = True
 
-    opponent = challenged_player
     message = strip_header(incoming_message)
     app.setTextArea('Display', f"<<< {message} >>>\n\n")
     app.setLabel('Player1', user_name)
@@ -239,24 +267,22 @@ def quit_game():
 
 
 def accept_challenge_button():
-    global opponent
     global player_dict
-    global game_turn
     global player_dict_symbol
+    global game_turn
     game_turn = False
 
-    opponent = challenger_name
     reset_challenger_buttons()
     app.setLabel('Player1', opponent)
     app.setLabel('Player2', user_name)
-    app.setLabel('player_turn_name', challenger_name)
+    app.setLabel('player_turn_name', opponent)
 
-    player_dict = {challenger_name: 'game_cross.gif',
+    player_dict = {opponent: 'game_cross.gif',
                    user_name: 'game_circle.gif'}
-    player_dict_symbol = {challenger_name: 'x',
+    player_dict_symbol = {opponent: 'x',
                           user_name: 'o'}
 
-    accept_message = f"A{challenger_name}".encode('utf-8')
+    accept_message = f"A{opponent}".encode('utf-8')
     client_socket.sendall(accept_message)
 
     app.showSubWindow(f"GameWindow - {user_name}", hide=False)
@@ -266,20 +292,22 @@ def decline_challenge_button():
     """Sends a decline message to server"""
 
     reset_challenger_buttons()
-    client_socket.sendall(f"D{challenger_name}".encode('utf-8'))
+    client_socket.sendall(f"D{opponent}".encode('utf-8'))
 
 
 def challenge_player_button():
     """Challenge selected player"""
 
-    global challenged_player
+    global opponent
 
-    challenged_player = app.getListBox('Online_users_listbox')[0]
+    opponent = app.getListBox('Online_users_listbox')[0]
 
-    if challenged_player != user_name:
-        challenge = f"C{challenged_player}".encode('utf-8')
+    if opponent != user_name:
+        challenge = f"C{opponent}".encode('utf-8')
         client_socket.sendall(challenge)
         app.disableButton("CHALLENGE")
+    else:
+        app.setTextArea('Display', "<<< You can't challenge yourself >>>\n\n")
 
 
 def game_button(button_name):
@@ -289,26 +317,12 @@ def game_button(button_name):
     global board
 
     if game_turn:
-
-        board = ttt.user_input(button_name, board, player_dict_symbol[user_name])
-
-        app.setButtonImage(button_name, player_dict[user_name])
-        app.disableButton(button_name)
-
+        board = place_player_mark(user_name, board, button_name)
         message = f"G{button_name}{opponent}".encode('utf-8')
         client_socket.sendall(message)
+        check_user_game_state()
 
-        if ttt.check_win_condition(board, player_dict_symbol[user_name]):
-            app.setLabel('winner_name', user_name)
-            disable_all_game_buttons()
-            print('Winner')
-        elif ttt.tie(board):
-            app.setLabel('winner_name', '--TIE--')
-            disable_all_game_buttons()
-            print('Tie')
-        else:
-            app.setLabel('player_turn_name', opponent)
-            game_turn = False
+
 
 
 def buttons(name):
@@ -472,7 +486,7 @@ def create_gui():
     ta2 = app.getTextAreaWidget("Display")
     ta1.config(font="Verdana 10 bold")
     ta2.config(font="Verdana 10 bold")
-    app.setStopFunction(check_stop)
+    app.setStopFunction(confirm_exit)
 
 
 if __name__ == '__main__':
@@ -482,8 +496,6 @@ if __name__ == '__main__':
 
     user_name = ''
     opponent = ''
-    challenger_name = ''
-    challenged_player = ''
     game_turn = False
     game_finished = False
     player_dict = {}
