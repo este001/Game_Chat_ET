@@ -144,6 +144,21 @@ def default_board():
     app.enableButton('21')
     app.enableButton('22')
 
+
+def confirm_quit_game():
+    global board
+
+    if app.yesNoBox("Confirm Exit", "Are you sure you want to exit the game?"):
+        client_socket.sendall("R".encode('utf-8'))
+        app.enableButton("CHALLENGE")
+        default_board()
+        board = ttt.start_game()
+        app.hideSubWindow(f"GameWindow - {user_name}")
+        return True
+    else:
+        return False
+
+
 # RECEIVE
 def receive_broadcast(incoming_message):
     """Displays incoming broadcast messages"""
@@ -322,14 +337,17 @@ def challenge_player_button():
 
     global opponent
 
-    opponent = app.getListBox('Online_users_listbox')[0]
+    try:
+        opponent = app.getListBox('Online_users_listbox')[0]
 
-    if opponent != user_name:
-        challenge = f"C{opponent}".encode('utf-8')
-        client_socket.sendall(challenge)
-        app.disableButton("CHALLENGE")
-    else:
-        app.setTextArea('Display', "<<< You can't challenge yourself >>>\n\n")
+        if opponent != user_name:
+            challenge = f"C{opponent}".encode('utf-8')
+            client_socket.sendall(challenge)
+            app.disableButton("CHALLENGE")
+        else:
+            app.setTextArea('Display', "<<< You can't challenge yourself >>>\n\n")
+    except IndexError:
+        app.setTextArea('Display', '<<< Select a player to challenge >>> \n\n')
 
 
 def game_button(button_name):
@@ -366,6 +384,7 @@ def buttons(name):
 def create_game_gui():
     # GAME SUB WINDOW
     app.startSubWindow(f'GameWindow - {user_name}')
+    app.setStopFunction(confirm_quit_game)
     app.addLabel('lefttopfiller', ' ', 0, 0)
     app.addLabel('righttopfiller', ' ', 0, 2)
     app.startLabelFrame('Tic Tac Toe', 0, 1)
