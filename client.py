@@ -63,15 +63,14 @@ def confirm_exit():
 
 
 # GAME FUNCTIONS
-
 def start_game():
     global board
     board = ttt.start_game()
 
 
 def check_user_game_state():
-
     global game_turn
+    global board
     if ttt.check_win_condition(board, player_dict_symbol[user_name]):
         app.setLabel('winner_name', user_name)
         disable_all_game_buttons()
@@ -86,7 +85,7 @@ def check_user_game_state():
 
 
 def check_opponent_game_state():
-
+    global board
     global game_turn
     if ttt.check_win_condition(board, player_dict_symbol[opponent]):
         app.setLabel('winner_name', opponent)
@@ -102,7 +101,6 @@ def check_opponent_game_state():
 
 
 def place_player_mark(player, game_board, coordinates):
-
     game_board = ttt.user_input(coordinates, game_board, player_dict_symbol[player])
     app.setButtonImage(coordinates, player_dict[player])
     app.disableButton(coordinates)
@@ -122,6 +120,30 @@ def disable_all_game_buttons():
     app.disableButton('22')
 
 
+def default_board():
+
+    app.setButtonImage("00", "game_empty.gif")
+    app.setButtonImage("01", "game_empty.gif")
+    app.setButtonImage("02", "game_empty.gif")
+    app.setButtonImage("10", "game_empty.gif")
+    app.setButtonImage("11", "game_empty.gif")
+    app.setButtonImage("12", "game_empty.gif")
+    app.setButtonImage("20", "game_empty.gif")
+    app.setButtonImage("21", "game_empty.gif")
+    app.setButtonImage("22", "game_empty.gif")
+
+    app.setLabel('winner_name', '')
+
+    app.enableButton('00')
+    app.enableButton('01')
+    app.enableButton('02')
+    app.enableButton('10')
+    app.enableButton('11')
+    app.enableButton('12')
+    app.enableButton('20')
+    app.enableButton('21')
+    app.enableButton('22')
+
 # RECEIVE
 def receive_broadcast(incoming_message):
     """Displays incoming broadcast messages"""
@@ -140,7 +162,6 @@ def receive_online_users(incoming_message):
 
 
 def receive_game_turn(incoming_message):
-
     global game_turn
     global board
 
@@ -165,13 +186,11 @@ def receive_challenge(incoming_message):
     app.setLabelFg('challengelabel', 'Red')
     app.disableButton("CHALLENGE")
 
-    # TODO Fix this
     colour_thread = threading.Thread(target=challenger_colour_change, daemon=True)
     colour_thread.start()
 
 
 def receive_accepted_challenge(incoming_message):
-
     global player_dict
     global player_dict_symbol
     global game_turn
@@ -226,7 +245,7 @@ def receive_from_server():
         app.disableButton('Send')
         app.disableButton('Accept')
         app.disableButton('Decline')
-        app.disableEnter()
+        app.disableEnter(),
 
 
 # BUTTONS
@@ -260,10 +279,13 @@ def cancel_button():
 
 
 def quit_game():
-    app.destroyAllSubWindows()
+    global board
 
     client_socket.sendall("R".encode('utf-8'))
     app.enableButton("CHALLENGE")
+    default_board()
+    board = ttt.start_game()
+    app.hideSubWindow(f"GameWindow - {user_name}")
 
 
 def accept_challenge_button():
@@ -323,8 +345,6 @@ def game_button(button_name):
         check_user_game_state()
 
 
-
-
 def buttons(name):
     """Directs pressed button to right function"""
 
@@ -381,8 +401,8 @@ def create_game_gui():
     app.addLabel('player_turn_name', '', 5, 1, colspan=2)
     app.addLabel('winner', 'Winner: ', 6, 0)
     app.addLabel('winner_name', '', 6, 1, colspan=2)
-    app.getLabelWidget('winner').config(font=("Verdana 11 bold"))
-    app.getLabelWidget('winner_name').config(font=("Verdana 11 bold"))
+    app.getLabelWidget('winner').config(font="Verdana 11 bold")
+    app.getLabelWidget('winner_name').config(font="Verdana 11 bold")
 
     app.setSticky('s')
     app.addButton('Quit game', buttons, 7, 2)
