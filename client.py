@@ -65,7 +65,6 @@ def check_board_state(board_state, player):
 
 
 def checkStop():
-
     if app.yesNoBox("Confirm Exit", "Are you sure you want to exit the application?"):
         client_socket.sendall("Q".encode('utf-8'))
         client_socket.close()
@@ -87,7 +86,6 @@ def disable_all_game_buttons():
 
 
 def start_game():
-
     global board
     board = ttt.start_game()
 
@@ -114,10 +112,9 @@ def receive_game_turn(incoming_message):
     global board
 
     game_move = incoming_message[1:3]
-    coordinates = int(game_move)
-    player = incoming_message[3:-1]
+    player = incoming_message[3:]
 
-    board = ttt.user_input(coordinates, board, player_dict_symbol[player])
+    board = ttt.user_input(game_move, board, player_dict_symbol[player])
     app.setButtonImage(game_move, player_dict[player])
     app.disableButton(game_move)
 
@@ -246,6 +243,12 @@ def cancel_button():
     app.stop()
 
 
+def quit_game():
+    client_socket.sendall("R".encode('utf-8'))
+    app.destroyAllSubWindows()
+    app.enableButton("CHALLENGE")
+
+
 def accept_challenge_button():
     global opponent
     global player_dict
@@ -261,7 +264,7 @@ def accept_challenge_button():
 
     player_dict = {challenger_name: 'game_cross.gif',
                    user_name: 'game_circle.gif'}
-    player_dict_symbol = {challenged_player: 'x',
+    player_dict_symbol = {challenger_name: 'x',
                           user_name: 'o'}
 
     accept_message = f"A{challenger_name}".encode('utf-8')
@@ -295,11 +298,10 @@ def game_button(button_name):
 
     global game_turn
     global board
-    coordinates = int(button_name)
 
     if game_turn:
 
-        board = ttt.user_input(coordinates, board, player_dict_symbol[user_name])
+        board = ttt.user_input(button_name, board, player_dict_symbol[user_name])
 
         app.setButtonImage(button_name, player_dict[user_name])
         app.disableButton(button_name)
@@ -329,7 +331,8 @@ def buttons(name):
                    'Close': cancel_button,
                    'Accept': accept_challenge_button,
                    'Decline': decline_challenge_button,
-                   'CHALLENGE': challenge_player_button}
+                   'CHALLENGE': challenge_player_button,
+                   'Quit game': quit_game}
 
     for k, v in button_dict.items():
         if k == name:

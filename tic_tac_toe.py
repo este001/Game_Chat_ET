@@ -53,8 +53,10 @@ def check_win_condition(board, player_symbol):
 
 
 def user_input(coordinate, board, player_symbol):
-    board[coordinate[0]].pop(coordinate[1])
-    board[coordinate[0]].insert(coordinate[1], player_symbol)
+    coordinate1 = int(coordinate[0])
+    coordinate2 = int(coordinate[1])
+    board[coordinate1].pop(coordinate2)
+    board[coordinate1].insert(coordinate2, player_symbol)
     return board
 
 

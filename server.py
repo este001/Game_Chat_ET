@@ -1,11 +1,6 @@
 import socket
 import threading
 import time
-import tic_tac_toe as ttt
-
-
-def Game(player1, player2):
-    pass
 
 
 def send_message(message, clients):
@@ -47,6 +42,11 @@ def player_declined_challenge(clients, name, conn):
             conn.sendall(message.encode('utf-8'))
 
 
+def reset_player_availability(conn, clients):
+    player_game_status[clients[conn]] = True
+    return True
+
+
 def player_availability(player):
     if player_game_status[player]:
         return True
@@ -78,7 +78,6 @@ def whisper_message(whispered_message, clients, conn):
 
 def receive_messages(conn):
     try:
-        board = {}
         while True:
             message = conn.recv(1024)
             if message.decode('utf-8')[0] == "Q":
@@ -109,7 +108,11 @@ def receive_messages(conn):
                         c.sendall(message.encode('utf-8'))
 
             elif message[0:1].decode('utf-8') == "D":
+
                 player_declined_challenge(clients, message, conn)
+
+            elif message[0:1].decode('utf-8') == "R":
+                reset_player_availability(conn, clients)
 
         print(f"{clients[conn]} has disconnected")
         conn.close()
