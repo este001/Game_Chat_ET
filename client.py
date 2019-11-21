@@ -25,15 +25,15 @@ def strip_header(message):
     return message
 
 
-def challenger_colour_change():
+def name_colour_change(label_name):
     """Sets challenger name and buttons to flashing-mode"""
 
-    for i in range(5):
-        app.setLabelFg('challenger_name', 'Red')
+    for i in range(3):
+        app.setLabelFg(label_name, 'Red')
         time.sleep(1.50)
-        app.setLabelFg('challenger_name', 'linen')
+        app.setLabelFg(label_name, 'linen')
         time.sleep(0.5)
-    app.setLabelFg('challenger_name', 'Red')
+    app.setLabelFg(label_name, 'Red')
 
 
 def main_window_initiation(name):
@@ -64,47 +64,35 @@ def confirm_exit():
 
 # GAME FUNCTIONS
 def start_game():
-    global board
-    board = ttt.start_game()
+    """Creates an empty game_board"""
+
+    game_board = ttt.start_game()
+    return game_board
 
 
-def check_user_game_state():
+def check_game_state(player, next_player):
     global game_turn
     global board
-    if ttt.check_win_condition(board, player_dict_symbol[user_name]):
-        app.setLabel('winner_name', user_name)
+    if ttt.check_win_condition(board, player_dict_symbol[player]):
+        app.setLabel('winner_name', player)
         disable_all_game_buttons()
-        print('Winner')
+        colour_thread = threading.Thread(target=name_colour_change, args=('winner_name', ), daemon=True)
+        colour_thread.start()
     elif ttt.tie(board):
         app.setLabel('winner_name', '--TIE--')
         disable_all_game_buttons()
-        print('Tie')
     else:
-        app.setLabel('player_turn_name', opponent)
-        game_turn = False
+        app.setLabel('player_turn_name', next_player)
+        if next_player == user_name:
+            game_turn = True
+        else:
+            game_turn = False
 
 
-def check_opponent_game_state():
-    global board
-    global game_turn
-    if ttt.check_win_condition(board, player_dict_symbol[opponent]):
-        app.setLabel('winner_name', opponent)
-        disable_all_game_buttons()
-        print('Winner')
-    elif ttt.tie(board):
-        app.setLabel('winner_name', '--TIE--')
-        disable_all_game_buttons()
-        print('Tie')
-    else:
-        app.setLabel('player_turn_name', user_name)
-        game_turn = True
+def place_player_mark(player, game_board, coordinates, player_dict_symbol):
+    """Places players symbols in backend game"""
 
-
-def place_player_mark(player, game_board, coordinates):
     game_board = ttt.user_input(coordinates, game_board, player_dict_symbol[player])
-    app.setButtonImage(coordinates, player_dict[player])
-    app.disableButton(coordinates)
-
     return game_board
 
 
@@ -181,8 +169,10 @@ def receive_game_turn(incoming_message):
     global board
 
     coordinates = incoming_message[1:3]
-    board = place_player_mark(opponent, board, coordinates)
-    check_opponent_game_state()
+    board = place_player_mark(opponent, board, coordinates, player_dict_symbol)
+    app.setButtonImage(coordinates, player_dict[opponent])
+    app.disableButton(coordinates)
+    check_game_state(opponent, user_name)
 
 
 def receive_challenge(incoming_message):
@@ -201,7 +191,7 @@ def receive_challenge(incoming_message):
     app.setLabelFg('challengelabel', 'Red')
     app.disableButton("CHALLENGE")
 
-    colour_thread = threading.Thread(target=challenger_colour_change, daemon=True)
+    colour_thread = threading.Thread(target=name_colour_change, args=('challenger_name', ), daemon=True)
     colour_thread.start()
 
 
@@ -357,10 +347,12 @@ def game_button(button_name):
     global board
 
     if game_turn:
-        board = place_player_mark(user_name, board, button_name)
+        board = place_player_mark(user_name, board, button_name, player_dict_symbol)
+        app.setButtonImage(button_name, player_dict[user_name])
+        app.disableButton(button_name)
         message = f"G{button_name}{opponent}".encode('utf-8')
         client_socket.sendall(message)
-        check_user_game_state()
+        check_game_state(user_name, opponent)
 
 
 def buttons(name):
@@ -384,6 +376,7 @@ def buttons(name):
 def create_game_gui():
     # GAME SUB WINDOW
     app.startSubWindow(f'GameWindow - {user_name}')
+    app.setResizable(canResize=False)
     app.setStopFunction(confirm_quit_game)
     app.addLabel('lefttopfiller', ' ', 0, 0)
     app.addLabel('righttopfiller', ' ', 0, 2)
@@ -391,13 +384,16 @@ def create_game_gui():
 
     app.addEmptyLabel('emptyLabel1')
     app.setPadding(3, 8)
-    app.setSticky('w')
+    app.setSticky('n')
     app.addLabel('Player1', 'Player 1', 1, 0)
+    app.getLabelWidget('Player1').config(font="Verdana 13 bold")
     app.setLabelFg('Player1', 'mediumblue')
+
     app.setSticky('n')
     app.addLabel('vs', 'VS.', 1, 1)
-    app.setSticky('e')
+    app.setSticky('n')
     app.addLabel('Player2', 'Player 2', 1, 2)
+    app.getLabelWidget('Player2').config(font="Verdana 13 bold")
     app.setLabelFg('Player2', 'red')
     app.addEmptyLabel('emptyLabel2')
 
@@ -529,10 +525,9 @@ def create_gui():
 
 
 if __name__ == '__main__':
+
     online_users = []
-
-    board = ttt.start_game()
-
+    board = start_game()
     user_name = ''
     opponent = ''
     game_turn = False
