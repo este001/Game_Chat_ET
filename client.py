@@ -50,21 +50,9 @@ def main_window_initiation(name):
     receive_messages.start()
 
 
-def check_board_state(board_state, player):
-    """Checks if the game should continue"""
+def check_stop():
+    """Confirms if user really wants to quit"""
 
-    if board_state == '1':
-        app.setLabel('player_turn_name', user_name)
-
-    elif board_state == '2':
-        app.setLabel('winner_name', player)
-        app.enableButton('CHALLENGE')
-    elif board_state == '3':
-        app.setLabel('winner_name', '-TIE-')
-        app.enableButton('CHALLENGE')
-
-
-def checkStop():
     if app.yesNoBox("Confirm Exit", "Are you sure you want to exit the application?"):
         client_socket.sendall("Q".encode('utf-8'))
         client_socket.close()
@@ -238,14 +226,15 @@ def name_submit_button():
 
 
 def cancel_button():
-    client_socket.sendall('Q'.encode('utf-8'))
-    client_socket.close()
+    # client_socket.sendall('Q'.encode('utf-8'))
+    # client_socket.close()
     app.stop()
 
 
 def quit_game():
-    client_socket.sendall("R".encode('utf-8'))
     app.destroyAllSubWindows()
+
+    client_socket.sendall("R".encode('utf-8'))
     app.enableButton("CHALLENGE")
 
 
@@ -483,7 +472,7 @@ def create_gui():
     ta2 = app.getTextAreaWidget("Display")
     ta1.config(font="Verdana 10 bold")
     ta2.config(font="Verdana 10 bold")
-    app.setStopFunction(checkStop)
+    app.setStopFunction(check_stop)
 
 
 if __name__ == '__main__':
