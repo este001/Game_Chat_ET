@@ -115,13 +115,14 @@ def receive_messages(conn):
                 reset_player_availability(conn, clients)
 
         print(f"{clients[conn]} has disconnected")
+
         conn.close()
         del clients[conn]
         send_message(online_users(clients), clients)
 
     except ConnectionResetError as cre:
         print('receive message', cre)
-
+        send_message(f"S<{clients[conn]} has disconnected >", clients)
         conn.close()
         del clients[conn]
         send_message(online_users(clients), clients)
@@ -135,21 +136,26 @@ def online_users(clients):
 
 
 def client_connected(conn):
-    while True:
-        user_name = conn.recv(1024)
-        if not user_name:
-            break
-        if username_exists(user_name.decode('utf-8'), clients):
-            conn.sendall('1'.encode('utf-8'))
-        else:
-            conn.sendall('0'.encode('utf-8'))
-            clients[conn] = user_name.decode('utf-8')
-            player_game_status[user_name.decode('utf-8')] = True
-            broadcast_message(message="Shas connected".encode('utf-8'), conn=conn, clients=clients)
-            time.sleep(1)
-            send_message(online_users(clients), clients)
-            receive_messages(conn)
-            break
+    try:
+        while True:
+            user_name = conn.recv(1024)
+            if user_name.decode('utf-8')[0] == "Q":
+                break
+            if username_exists(user_name.decode('utf-8')[1:], clients):
+                conn.sendall('1'.encode('utf-8'))
+            else:
+                conn.sendall('0'.encode('utf-8'))
+                clients[conn] = user_name[1:].decode('utf-8')
+                player_game_status[user_name[1:].decode('utf-8')] = True
+                broadcast_message(message="Shas connected".encode('utf-8'), conn=conn, clients=clients)
+                time.sleep(1)
+                send_message(online_users(clients), clients)
+                receive_messages(conn)
+                break
+    except ConnectionResetError as e:
+
+        print("client_connected - ", e)
+        conn.close()
 
 
 if __name__ == '__main__':
