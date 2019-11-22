@@ -48,7 +48,6 @@ def name_colour_change(label_name):
             client_socket.sendall('R'.encode('utf-8'))
             break
 
-
 def main_window_initiation():
     """Prepares and initiates the chat window"""
 
@@ -240,7 +239,10 @@ def receive_accepted_challenge(incoming_message):
     global player_dict
     global player_dict_symbol
     global game_turn
+    global opponent_answer
+
     game_turn = True
+    opponent_answer = True
 
     message = strip_header(incoming_message)
     app.setTextArea('Display', f"<<< {message} >>>\n\n")
@@ -257,6 +259,9 @@ def receive_accepted_challenge(incoming_message):
 
 def receive_declined_challenge(incoming_message):
     """Prints challenge decline message to challenger"""
+
+    global opponent_answer
+    opponent_answer = True
 
     message = strip_header(incoming_message)
 
@@ -311,9 +316,7 @@ def name_submit_button():
     """Initiates main window when name is valid"""
 
     global user_name
-    global submitted
 
-    submitted = True
     user_name = app.getEntry('NameEntry')
     if 0 < len(user_name) <= 10:
         message = f"N{user_name}".encode('utf-8')
@@ -376,6 +379,18 @@ def decline_challenge_button():
     client_socket.sendall(f"D{opponent}".encode('utf-8'))
 
 
+def challenge_player_thread():
+
+    global opponent_answer
+
+    while not opponent_answer:
+        if opponent not in online_users:
+            reset_challenger_buttons()
+            client_socket.sendall('R'.encode('utf-8'))
+            break
+    opponent_answer = False
+
+
 def challenge_player_button():
     """Challenge selected player"""
 
@@ -388,6 +403,9 @@ def challenge_player_button():
             challenge = f"C{opponent}".encode('utf-8')
             client_socket.sendall(challenge)
             app.disableButton("CHALLENGE")
+
+            challenge_thread = threading.Thread(target=challenge_player_thread, daemon=True)
+            challenge_thread.start()
         else:
             app.setTextArea('Display', "<<< You can't challenge yourself >>>\n\n")
     except IndexError:
@@ -589,7 +607,7 @@ if __name__ == '__main__':
     opponent = ''
     game_turn = False
     game_finished = False
-    submitted = False
+    opponent_answer = False
     player_dict = {}
     player_dict_symbol = {}
 
