@@ -3,6 +3,7 @@ from appJar import gui
 import threading
 import time
 import tic_tac_toe as ttt
+import sys
 
 """Client for game/chat application"""
 
@@ -14,8 +15,10 @@ def reset_challenger_buttons():
     app.setButtonFg('Accept', 'Black')
     app.setButtonFg('Decline', 'Black')
     app.setLabelFg('challengelabel', 'darkgray')
+
     app.disableButton('Accept')
     app.disableButton('Decline')
+    app.enableButton('CHALLENGE')
 
 
 def strip_header(message):
@@ -28,19 +31,29 @@ def strip_header(message):
 def name_colour_change(label_name):
     """Sets selected name to flashing-mode"""
 
-    for i in range(3):
-        app.setLabelFg(label_name, 'Red')
-        time.sleep(1.25)
-        app.setLabelFg(label_name, 'linen')
-        time.sleep(0.5)
-    app.setLabelFg(label_name, 'Red')
+    for i in range(5):
+        if opponent in online_users:
+            app.setLabelFg(label_name, 'Red')
+            time.sleep(1.5)
+            app.setLabelFg(label_name, 'linen')
+            time.sleep(0.5)
+
+            if i == 4:
+                reset_challenger_buttons()
+                decline_challenge_button()
+
+        else:
+            app.setTextArea('Display', f'<<< {opponent} left the game >>>\n\n')
+            reset_challenger_buttons()
+            client_socket.sendall('R'.encode('utf-8'))
+            break
 
 
 def main_window_initiation():
     """Prepares and initiates the chat window"""
 
     create_game_gui()
-    app.destroySubWindow('NameSubWindow')
+    app.hideSubWindow('NameSubWindow')
     app.setTitle(f"ChatGameTE - {user_name}")
     app.disableEnter()
     app.enableEnter(send_message_button)
@@ -59,6 +72,12 @@ def confirm_exit():
         return True
     else:
         return False
+
+
+def confirm_exit_name_window():
+    """Workaround function to close application properly in name sub window"""
+
+    sys.exit()
 
 
 # GAME FUNCTIONS
@@ -177,9 +196,13 @@ def receive_broadcast(incoming_message):
 def receive_online_users(incoming_message):
     """Updates the online users list"""
 
+    global online_users
+
     names = incoming_message.lstrip("O")
     users_online = names.split('-')
     users_online.pop()
+
+    online_users = users_online
 
     app.clearListBox('Online_users_listbox')
     app.addListItems('Online_users_listbox', users_online)
@@ -288,7 +311,9 @@ def name_submit_button():
     """Initiates main window when name is valid"""
 
     global user_name
+    global submitted
 
+    submitted = True
     user_name = app.getEntry('NameEntry')
     if 0 < len(user_name) <= 10:
         message = f"N{user_name}".encode('utf-8')
@@ -403,6 +428,8 @@ def buttons(name):
 
 # GUI
 def create_game_gui():
+    """Creates the gui for game board"""
+
     # GAME SUB WINDOW
     app.startSubWindow(f'GameWindow - {user_name}')
     app.setResizable(canResize=False)
@@ -487,6 +514,7 @@ def create_gui():
 
     app.stopFrame()  # functionality
     app.stopLabelFrame()
+    app.setStopFunction(confirm_exit_name_window)
     app.stopSubWindow()
 
     # MAIN WINDOW
@@ -561,6 +589,7 @@ if __name__ == '__main__':
     opponent = ''
     game_turn = False
     game_finished = False
+    submitted = False
     player_dict = {}
     player_dict_symbol = {}
 

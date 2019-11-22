@@ -157,6 +157,7 @@ def client_connected(conn):
 
         print("client_connected - ", e)
         conn.close()
+        del clients[conn]
 
 
 if __name__ == '__main__':
