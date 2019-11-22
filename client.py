@@ -26,27 +26,26 @@ def strip_header(message):
 
 
 def name_colour_change(label_name):
-    """Sets challenger name and buttons to flashing-mode"""
+    """Sets selected name to flashing-mode"""
 
     for i in range(3):
         app.setLabelFg(label_name, 'Red')
-        time.sleep(1.50)
+        time.sleep(1.25)
         app.setLabelFg(label_name, 'linen')
         time.sleep(0.5)
     app.setLabelFg(label_name, 'Red')
 
 
-def main_window_initiation(name):
-    global user_name
-    app.destroySubWindow('NameSubWindow')
-    app.setTitle(f"ChatGameTE - {name}")
-
-    app.disableEnter()
-    user_name = name
-    app.enableEnter(send_message_button)
+def main_window_initiation():
+    """Prepares and initiates the chat window"""
 
     create_game_gui()
+    app.destroySubWindow('NameSubWindow')
+    app.setTitle(f"ChatGameTE - {user_name}")
+    app.disableEnter()
+    app.enableEnter(send_message_button)
     app.show()
+
     receive_messages = threading.Thread(target=receive_from_server, daemon=True)
     receive_messages.start()
 
@@ -63,6 +62,18 @@ def confirm_exit():
 
 
 # GAME FUNCTIONS
+def enable_accept_decline_buttons():
+    """Enables choice buttons when challenged"""
+
+    app.enableButton('Accept')
+    app.enableButton('Decline')
+    app.setLabel('challenger_name', opponent)
+    app.setButtonFg('Accept', 'Red')
+    app.setButtonFg('Decline', 'Red')
+    app.setLabelFg('challengelabel', 'Red')
+    app.disableButton("CHALLENGE")
+
+
 def start_game():
     """Creates an empty game_board"""
 
@@ -71,8 +82,11 @@ def start_game():
 
 
 def check_game_state(player, next_player):
+    """Checks every game move for win/tie/continue"""
+
     global game_turn
     global board
+
     if ttt.check_win_condition(board, player_dict_symbol[player]):
         app.setLabel('winner_name', player)
         disable_all_game_buttons()
@@ -97,6 +111,8 @@ def place_player_mark(player, game_board, coordinates, player_dict_symbol):
 
 
 def disable_all_game_buttons():
+    """Disables all buttons on game board"""
+
     app.disableButton('00')
     app.disableButton('01')
     app.disableButton('02')
@@ -109,7 +125,11 @@ def disable_all_game_buttons():
 
 
 def default_board():
+    """Resets the game board window to default"""
 
+    global board
+
+    board = ttt.start_game()
     app.setButtonImage("00", "game_empty.gif")
     app.setButtonImage("01", "game_empty.gif")
     app.setButtonImage("02", "game_empty.gif")
@@ -134,13 +154,12 @@ def default_board():
 
 
 def confirm_quit_game():
-    global board
+    """Confirms if players want to exit, then resets the board"""
 
     if app.yesNoBox("Confirm Exit", "Are you sure you want to exit the game?"):
         client_socket.sendall("R".encode('utf-8'))
         app.enableButton("CHALLENGE")
         default_board()
-        board = ttt.start_game()
         app.hideSubWindow(f"GameWindow - {user_name}")
         return True
     else:
@@ -156,6 +175,8 @@ def receive_broadcast(incoming_message):
 
 
 def receive_online_users(incoming_message):
+    """Updates the online users list"""
+
     names = incoming_message.lstrip("O")
     users_online = names.split('-')
     users_online.pop()
@@ -165,7 +186,8 @@ def receive_online_users(incoming_message):
 
 
 def receive_game_turn(incoming_message):
-    global game_turn
+    """Handles opponents game move"""
+
     global board
 
     coordinates = incoming_message[1:3]
@@ -176,26 +198,22 @@ def receive_game_turn(incoming_message):
 
 
 def receive_challenge(incoming_message):
+    """Handles a challenge from challenger"""
+
     global opponent
     opponent = incoming_message[1:]
 
     challenge_message = f"<<< {opponent} has challenged you >>>\n\n"
     app.setTextArea('Display', challenge_message)
-
-    app.enableButton('Accept')
-    app.enableButton('Decline')
-    app.setLabel('challenger_name', opponent)
-
-    app.setButtonFg('Accept', 'Red')
-    app.setButtonFg('Decline', 'Red')
-    app.setLabelFg('challengelabel', 'Red')
-    app.disableButton("CHALLENGE")
+    enable_accept_decline_buttons()
 
     colour_thread = threading.Thread(target=name_colour_change, args=('challenger_name', ), daemon=True)
     colour_thread.start()
 
 
 def receive_accepted_challenge(incoming_message):
+    """Initiates a game when challenge is accepted"""
+
     global player_dict
     global player_dict_symbol
     global game_turn
@@ -215,7 +233,7 @@ def receive_accepted_challenge(incoming_message):
 
 
 def receive_declined_challenge(incoming_message):
-    """Prints message to challenger"""
+    """Prints challenge decline message to challenger"""
 
     message = strip_header(incoming_message)
 
@@ -224,6 +242,8 @@ def receive_declined_challenge(incoming_message):
 
 
 def receive_from_server():
+    """Directs message depending on message header"""
+
     try:
         while True:
             incoming_message = client_socket.recv(1024)
@@ -255,6 +275,8 @@ def receive_from_server():
 
 # BUTTONS
 def send_message_button():
+    """Function sends broadcast message to server"""
+
     my_message = app.getTextArea('Message_entry')
     if len(my_message) > 0:
         my_message = f"S{my_message}".encode('utf-8')
@@ -263,13 +285,18 @@ def send_message_button():
 
 
 def name_submit_button():
-    name = app.getEntry('NameEntry')
-    if 0 < len(name) <= 10:
-        client_socket.sendall(name.encode('utf-8'))
+    """Initiates main window when name is valid"""
+
+    global user_name
+
+    user_name = app.getEntry('NameEntry')
+    if 0 < len(user_name) <= 10:
+        message = f"N{user_name}".encode('utf-8')
+        client_socket.sendall(message)
         name_validation = bool(int(client_socket.recv(1024).decode('utf-8')))
 
         if not name_validation:
-            main_window_initiation(name)
+            main_window_initiation()
         else:
             app.errorBox('Invalid name', 'Name is not available\nPlease try another one.')
             app.clearEntry('NameEntry')
@@ -278,12 +305,14 @@ def name_submit_button():
 
 
 def cancel_button():
-    # client_socket.sendall('Q'.encode('utf-8'))
-    # client_socket.close()
+    """Closes window"""
+
     app.stop()
 
 
 def quit_game():
+    """Handles a game quit"""
+
     global board
 
     client_socket.sendall("R".encode('utf-8'))

@@ -18,6 +18,7 @@ class GameTest(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     def test_horizontal_win_condition(self):
+
         symbol = 'x'
         symbol2 = 'o'
         board_top_row = [['x', 'x', 'x'], ['-', '-', '-'], ['-', '-', '-']]
@@ -53,6 +54,7 @@ class GameTest(unittest.TestCase):
         self.assertFalse(ttt.vertical_win_condition(game_board4, player_symbol))
 
     def test_diagonal_win_condition(self):
+
         game_board1 = [['x', '-', '-'], ['-', 'x', '-'], ['-', '-', 'x']]
         game_board2 = [['-', '-', 'x'], ['-', 'x', '-'], ['x', '-', '-']]
         game_board3 = [['-', '-', 'o'], ['-', 'x', '-'], ['x', '-', '-']]
