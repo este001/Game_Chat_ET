@@ -152,6 +152,7 @@ def client_connected(conn):
                 send_message(online_users(clients), clients)
                 receive_messages(conn)
                 break
+        conn.close()
     except ConnectionResetError as e:
 
         print("client_connected - ", e)
