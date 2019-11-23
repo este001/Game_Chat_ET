@@ -28,8 +28,10 @@ def strip_header(message):
     return message
 
 
-def name_colour_change(label_name):
+def game_challenge_countdown(label_name):
     """Sets selected name to flashing-mode"""
+
+    global challenge_answer
 
     for i in range(5):
         if opponent in online_users:
@@ -38,7 +40,7 @@ def name_colour_change(label_name):
             app.setLabelFg(label_name, 'linen')
             time.sleep(0.5)
 
-            if i == 4:
+            if i == 4 and not challenge_answer:
                 reset_challenger_buttons()
                 decline_challenge_button()
 
@@ -47,6 +49,7 @@ def name_colour_change(label_name):
             reset_challenger_buttons()
             client_socket.sendall('R'.encode('utf-8'))
             break
+    challenge_answer = False
 
 def main_window_initiation():
     """Prepares and initiates the chat window"""
@@ -108,7 +111,7 @@ def check_game_state(player, next_player):
     if ttt.check_win_condition(board, player_dict_symbol[player]):
         app.setLabel('winner_name', player)
         disable_all_game_buttons()
-        colour_thread = threading.Thread(target=name_colour_change, args=('winner_name', ), daemon=True)
+        colour_thread = threading.Thread(target=game_challenge_countdown, args=('winner_name',), daemon=True)
         colour_thread.start()
     elif ttt.tie(board):
         app.setLabel('winner_name', '--TIE--')
@@ -229,7 +232,7 @@ def receive_challenge(incoming_message):
     app.setTextArea('Display', challenge_message)
     enable_accept_decline_buttons()
 
-    colour_thread = threading.Thread(target=name_colour_change, args=('challenger_name', ), daemon=True)
+    colour_thread = threading.Thread(target=game_challenge_countdown, args=('challenger_name',), daemon=True)
     colour_thread.start()
 
 
@@ -351,11 +354,15 @@ def quit_game():
 
 
 def accept_challenge_button():
+    """Initiates a game when accepted a challenge"""
+
     global player_dict
     global player_dict_symbol
     global game_turn
-    game_turn = False
+    global challenge_answer
 
+    game_turn = False
+    challenge_answer = True
     reset_challenger_buttons()
     app.setLabel('Player1', opponent)
     app.setLabel('Player2', user_name)
@@ -374,6 +381,8 @@ def accept_challenge_button():
 
 def decline_challenge_button():
     """Sends a decline message to server"""
+    global challenge_answer
+    challenge_answer = True
 
     reset_challenger_buttons()
     client_socket.sendall(f"D{opponent}".encode('utf-8'))
@@ -608,6 +617,7 @@ if __name__ == '__main__':
     game_turn = False
     game_finished = False
     opponent_answer = False
+    challenge_answer = False
     player_dict = {}
     player_dict_symbol = {}
 
