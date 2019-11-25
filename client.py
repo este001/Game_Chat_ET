@@ -28,18 +28,25 @@ def strip_header(message):
     return message
 
 
+def font_colour_flashing(label_name, times):
+    """Changes font-colour on selected label"""
+
+    for i in range(times):
+        app.setLabelFg(label_name, 'Red')
+        time.sleep(1.5)
+        app.setLabelFg(label_name, 'linen')
+        time.sleep(0.5)
+        app.setLabelFg(label_name, 'Red')
+
+
 def game_challenge_countdown(label_name):
-    """Sets selected name to flashing-mode"""
+    """Counts down the challenge time"""
 
     global challenge_answer
 
     for i in range(5):
         if opponent in online_users:
-            app.setLabelFg(label_name, 'Red')
-            time.sleep(1.5)
-            app.setLabelFg(label_name, 'linen')
-            time.sleep(0.5)
-
+            font_colour_flashing(label_name, 1)
             if i == 4 and not challenge_answer:
                 reset_challenger_buttons()
                 decline_challenge_button()
@@ -49,7 +56,9 @@ def game_challenge_countdown(label_name):
             reset_challenger_buttons()
             client_socket.sendall('R'.encode('utf-8'))
             break
+
     challenge_answer = False
+
 
 def main_window_initiation():
     """Prepares and initiates the chat window"""
@@ -111,7 +120,7 @@ def check_game_state(player, next_player):
     if ttt.check_win_condition(board, player_dict_symbol[player]):
         app.setLabel('winner_name', player)
         disable_all_game_buttons()
-        colour_thread = threading.Thread(target=game_challenge_countdown, args=('winner_name',), daemon=True)
+        colour_thread = threading.Thread(target=font_colour_flashing, args=('winner_name', 3), daemon=True)
         colour_thread.start()
     elif ttt.tie(board):
         app.setLabel('winner_name', '--TIE--')
