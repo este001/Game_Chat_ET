@@ -39,27 +39,6 @@ def font_colour_flashing(label_name, times):
         app.setLabelFg(label_name, 'Red')
 
 
-def game_challenge_countdown(label_name):
-    """Counts down the challenge time"""
-
-    global challenge_answer
-
-    for i in range(5):
-        if opponent in online_users:
-            font_colour_flashing(label_name, 1)
-            if i == 4 and not challenge_answer:
-                reset_challenger_buttons()
-                decline_challenge_button()
-
-        else:
-            app.setTextArea('Display', f'<<< {opponent} left the game >>>\n\n')
-            reset_challenger_buttons()
-            client_socket.sendall('R'.encode('utf-8'))
-            break
-
-    challenge_answer = False
-
-
 def main_window_initiation():
     """Prepares and initiates the chat window"""
 
@@ -92,6 +71,41 @@ def confirm_exit_name_window():
 
 
 # GAME FUNCTIONS
+
+def game_challenge_countdown(label_name):
+    """Counts down the challenge time"""
+
+    global challenge_answer
+
+    for i in range(5):
+        if opponent in online_users:
+            font_colour_flashing(label_name, 1)
+            if i == 4 and not challenge_answer:
+                reset_challenger_buttons()
+                decline_challenge_button()
+
+        else:
+            app.setTextArea('Display', f'<<< {opponent} left the game >>>\n\n')
+            reset_challenger_buttons()
+            client_socket.sendall('R'.encode('utf-8'))
+            break
+
+    challenge_answer = False
+
+
+def challenger_availability():
+    """Checks if challenger is online"""
+
+    global opponent_answer
+
+    while not opponent_answer:
+        if opponent not in online_users:
+            reset_challenger_buttons()
+            client_socket.sendall('R'.encode('utf-8'))
+            break
+    opponent_answer = False
+
+
 def enable_accept_decline_buttons():
     """Enables choice buttons when challenged"""
 
@@ -397,18 +411,6 @@ def decline_challenge_button():
     client_socket.sendall(f"D{opponent}".encode('utf-8'))
 
 
-def challenge_player_thread():
-
-    global opponent_answer
-
-    while not opponent_answer:
-        if opponent not in online_users:
-            reset_challenger_buttons()
-            client_socket.sendall('R'.encode('utf-8'))
-            break
-    opponent_answer = False
-
-
 def challenge_player_button():
     """Challenge selected player"""
 
@@ -422,7 +424,7 @@ def challenge_player_button():
             client_socket.sendall(challenge)
             app.disableButton("CHALLENGE")
 
-            challenge_thread = threading.Thread(target=challenge_player_thread, daemon=True)
+            challenge_thread = threading.Thread(target=challenger_availability, daemon=True)
             challenge_thread.start()
         else:
             app.setTextArea('Display', "<<< You can't challenge yourself >>>\n\n")
@@ -520,7 +522,7 @@ def create_game_gui():
 def create_gui():
     """Creates the gui for the application"""
 
-    # SUBWINDOW LOGIN
+    # SUB WINDOW LOGIN
     app.startSubWindow("NameSubWindow", modal=True)
     app.enableEnter(name_submit_button)
     app.setSize("280x135")
