@@ -404,6 +404,7 @@ def accept_challenge_button():
 
 def decline_challenge_button():
     """Sends a decline message to server"""
+
     global challenge_answer
     challenge_answer = True
 
@@ -632,7 +633,8 @@ if __name__ == '__main__':
     player_dict = {}
     player_dict_symbol = {}
 
-    IP = "127.0.0.1"
+    #IP = "127.0.0.1"
+    IP = "35.228.166.84"
     PORT = 1234
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

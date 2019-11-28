@@ -8,7 +8,7 @@ class ServerTest(unittest.TestCase):
         clients = {'client1': 'tim', 'client2': 'este', 'client3': 'oscar'}
 
         list_of_users = server.online_users(clients)
-        expected_list_of_users = "Otim este oscar "
+        expected_list_of_users = "Otim-este-oscar-"
 
         self.assertEqual(list_of_users, expected_list_of_users)
 
