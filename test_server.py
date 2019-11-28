@@ -12,6 +12,13 @@ class ServerTest(unittest.TestCase):
 
         self.assertEqual(list_of_users, expected_list_of_users)
 
+    def test_strip_header(self):
+        message = "STim has connected"
+        expected_result = "Tim has connected"
+        actual_result = server.strip_header(message)
+
+        self.assertEqual(actual_result, expected_result)
+
 
 if __name__ == '__main__':
     unittest.main()
