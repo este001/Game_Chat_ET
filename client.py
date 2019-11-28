@@ -304,16 +304,28 @@ def receive_from_server():
             if not incoming_message:
                 break
             incoming_message = incoming_message.decode('utf-8')
+
+            # Receive broadcast message
             if incoming_message[0:1] == "S":
                 receive_broadcast(incoming_message)
+
+            # Receive challenge
             elif incoming_message[0:1] == "C":
                 receive_challenge(incoming_message)
+
+            # Receive online users list
             elif incoming_message[0:1] == "O":
                 receive_online_users(incoming_message)
+
+            # Receive game move
             elif incoming_message[0:1] == "G":
                 receive_game_turn(incoming_message)
+
+            # Receive accepted challenge
             elif incoming_message[0:1] == "A":
                 receive_accepted_challenge(incoming_message)
+
+            # Receive decline challenge
             elif incoming_message[0:1] == "D":
                 receive_declined_challenge(incoming_message)
 
